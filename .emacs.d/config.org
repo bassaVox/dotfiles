@@ -1,0 +1,200 @@
+#+TITLE: Emacs configuration
+#+AUTHOR: damenipotu
+
+#+SETUPFILE: https://fniessen.github.io/org-html-themes/setup/THEME-NAME.setup/theme-readtheorg.setup
+
+#+OPTION: num:nil
+
+#+PROPERTY: header-args :results silent
+
+* Prelude
+  Thanks renzix to help me kickstart this configuration file using org-mode
+  https://www.youtube.com/watch?v=PsyPbjZOpYs&list=WL&index=44&t=865s
+
+* Setup
+  Install usepackage and bootstrap it
+** setup repositories
+
+   Melpa and Elpa enabling
+
+   #+BEGIN_SRC emacs-lisp
+     (setq package-enable-at-startup nil
+	   package-archives '(("elpa" . "https://elpa.gnu.org/packages/")
+			      ("melpa" . "https://melpa.org/packages/")))
+   #+END_SRC   
+
+** bootstrap
+
+   #+name: use-package
+   #+BEGIN_SRC emacs-lisp
+     (unless (package-installed-p 'use-package)
+       (package-refresh-contents)
+       (package-install 'use-package))
+     (require 'use-package)
+     (require 'use-package-ensure)
+     (setq use-package-always-ensure t)
+   #+END_SRC 
+
+** preferences
+*** Display
+    Removing upper bar and scroll
+
+    #+NAME: bar-disable
+    #+BEGIN_SRC emacs-lisp
+      (menu-bar-mode -1)
+      (scroll-bar-mode -1)
+      (tool-bar-mode -1)
+    #+END_SRC
+
+    Nice dark Theme
+
+    #+NAME: theme
+    #+BEGIN_SRC emacs-lisp
+      (use-package doom-themes
+	:config (load-theme 'doom-dracula t))
+    #+END_SRC
+
+*** Miscelania
+
+    Just use y and n for prompt action
+
+    #+NAME: yes-or-no
+    #+BEGIN_SRC emacs-lisp
+      (defalias 'yes-or-no-p 'y-or-n-p)
+    #+END_SRC
+    
+    
+    Changing default behavior of saving backups on the same directory
+    to a dedicated folder
+    #+NAME: backups
+    #+BEGIN_SRC emacs-lisp
+      (setq backup-directory-alist `(("." . "~/.backup_emacs"))
+	    backup-by-copying t
+	    delete-old-versions t
+	    kept-new-versions 10
+	    kept-old-versions 10
+	    version-control t
+	    auto-save-list-file-prefix nil)
+    #+END_SRC
+    
+* Packages
+** which-key
+   shows keybindings as you type
+
+   #+NAME: which-key
+   #+BEGIN_SRC emacs-lisp
+     (use-package which-key
+       :config (which-key-mode))
+   #+END_SRC
+** magit
+   #+NAME: magit
+   #+BEGIN_SRC emacs-lisp
+     (use-package magit)
+   #+END_SRC
+   
+** helm
+
+   Other file completions are ido-mode and ivy 
+
+   #+NAME: helm
+   #+BEGIN_SRC emacs-lisp
+     (use-package helm
+       :init
+       (setq helm-follow-mode-persistent t
+	     helm-autoresize-max-height 40
+	     helm-display-header-line nil)
+       :config
+       (require 'helm-config)
+       (helm-autoresize-mode t)
+       (add-hook 'helm-minibuffer-set-up-hook 'helm-hide-minibuffer-maybe)
+       (helm-mode t))
+  
+
+   #+END_SRC
+
+** projectile
+
+   Projectile manages projects. Installing the official one plus extension
+
+   #+NAME: projectile
+   #+BEGIN_SRC emacs-lisp
+     (use-package helm-projectile
+       :config
+       (projectile-mode t)
+       (helm-projectile-on))
+   #+END_SRC
+** company
+   
+   Autocomplete for words in programming languages. It needs lsp-mode
+   
+   #+NAME: company
+   #+BEGIN_SRC emacs-lisp
+     (use-package company
+       :config
+       (add-hook 'after-init-hook 'global-company-mode)
+       (setq company-require-match 'never
+	     company-minimum-prefix-length 2
+	     company-tooltip-align-annotation 1
+	     company-idle-delay 1
+	     company-tooltip-limit 20
+	     global-company-mode t))
+   #+END_SRC
+
+** lsp-mode
+   Needed by company. Provides IDE-like experience. TODO: integrate with python
+
+   #+NAME: lsp-mode
+   #+BEGIN_SRC emacs-lisp
+     (use-package lsp-mode
+       :hook
+       ((scala-mode . lsp)
+	(python-mode . lsp)
+	(js-mode . lsp)
+	(rust-mode . lsp)
+	(web-mode . lsp)
+	(sh-mode . lsp))
+       :config 
+       (setq lsp-prefer-flymake nil
+	     lsp-enable-snippet t
+	     lsp-auto-execute-action t
+	     lsp-eldoc-render-all t
+	     lsp-enable-completion-at-point t
+	     lsp-enable-xref t
+	     lsp-enable-indentation t))
+
+     ;; lisp-ui adds inline UI element
+
+     (use-package lsp-ui
+       :after lsp-mode
+       :hook (lsp-mode-hook . lsp-ui-mode))
+
+     (use-package company-lsp
+       :after '(company lsp-mode)
+       :config
+       (setq company-lsp-cache-candidates t
+	     company-lsp-async t
+	     company-lsp-enable-snippet t)
+       (push 'company-lsp company-backends))
+
+     (use-package company-box
+       :hook (company-mode . company-box-mode))
+(use-package dap-mode
+  :config
+  (dap-mode 1)
+  (dap-ui-mode 1)
+  (require 'dap-python))
+
+
+   #+END_SRC
+* Keybindings
+#+NAME: keybidings
+
+#+BEGIN_SRC emacs-lisp
+  (use-package general
+    :config
+    (general-define-key
+     "M-x" 'helm-M-x
+     "C-x g" 'magit-status
+     "M-p" 'projectile-command-map
+     "C-x C-f" 'helm-find-files))
+#+END_SRC
