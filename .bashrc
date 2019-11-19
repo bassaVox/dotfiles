@@ -115,4 +115,5 @@ if ! shopt -oq posix; then
     . /etc/bash_completion
   fi
 fi
-alias dotfiles='/usr/bin/git --git-dir=/home/marco/.dotfiles/ --work-tree=/home/marco'
+alias dotfiles='/usr/bin/git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
+PS1="\n\[\033[32m\]\w\n\[\033[1;31m\]\u@\h: \[\033[1;34m\]\$(/usr/bin/tty | /bin/sed -e 's:/dev/::'): \[\033[1;36m\]"
