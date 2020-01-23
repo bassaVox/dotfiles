@@ -220,6 +220,13 @@
     :init
     (elpy-enable))
 #+END_SRC
+
+** sml
+  #+NAME: sml-mode
+  #+BEGIN_SRC emacs-lisp
+  (use-package sml-mode)
+  #+END_SRC
+
 * Keybindings
 #+NAME: keybidings
 
