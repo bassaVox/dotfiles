@@ -193,6 +193,20 @@
     :ensure t
     :init (global-flycheck-mode))
 #+END_SRC
+** editorconfig
+#+NAME: editorconfig
+#+BEGIN_SRC emacs-lisp
+(use-package editorconfig
+  :ensure t
+  :config
+  (editorconfig-mode 1)
+  (add-hook 'editorconfig-after-apply-functions
+  (lambda (props) (setq web-mode-block-padding 0)))
+
+)
+
+
+#+END_SRC
 
 * Languages Specific Modes and Support
 ** rust
@@ -221,12 +235,42 @@
     (elpy-enable))
 #+END_SRC
 
+#+NAME: blacken-mode
+#+BEGIN_SRC emacs-lisp
+  (use-package blacken
+    :ensure t)
+#+END_SRC
 ** sml
   #+NAME: sml-mode
   #+BEGIN_SRC emacs-lisp
   (use-package sml-mode)
   #+END_SRC
+** web
+   #+NAME: web-mode
+   #+BEGIN_SRC emacs-lisp
+     (use-package web-mode
+     :config
+     (add-to-list 'auto-mode-alist '("\\.djhtml\\'" . web-mode))
+     (add-to-list 'auto-mode-alist '("\\.vue\\'" . web-mode))
 
+
+     (setq
+     web-mode-markup-indent-offset 2
+     web-mode-css-indent-offset 2
+     web-mode-code-indent-offset 2
+     web-mode-enable-auto-closing t
+     web-mode-enable-auto-opening t
+     web-mode-enable-auto-pairing t
+     web-mode-enable-auto-indentation t
+     web-mode-script-padding 0
+     web-mode-block-padding 0
+     web-mode-style-padding 0
+     web-mode-code-indent-offset 2
+     )
+
+     )
+
+   #+END_SRC
 * Keybindings
 #+NAME: keybidings
 
