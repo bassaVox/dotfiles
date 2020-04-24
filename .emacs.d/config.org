@@ -146,13 +146,15 @@
    #+NAME: lsp-mode
    #+BEGIN_SRC emacs-lisp
      (use-package lsp-mode
+       :commands lsp
        :hook
        ((scala-mode . lsp)
 	(python-mode . lsp)
 	(js-mode . lsp)
 	(rust-mode . lsp)
 	(web-mode . lsp)
-	(sh-mode . lsp))
+	(sh-mode . lsp)
+        (vue-mode . lsp))
        :config 
        (setq lsp-prefer-flymake nil
 	     lsp-enable-snippet t
@@ -204,10 +206,22 @@
   (lambda (props) (setq web-mode-block-padding 0)))
 
 )
-
-
 #+END_SRC
+** yasnippet
+Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnippet_via_usepackage/][reddit]] user
+#+NAME: yasnippet
+#+BEGIN_SRC emacs-lisp
+  (use-package yasnippet
+    :ensure t
+    :config
+   (yas-reload-all)
+   (add-hook 'vue-mode #'yas-minor-mode)
+   (add-hook 'web-mode #'yas-minor-mode)
+   )
 
+  (use-package yasnippet-snippets
+    :ensure t)
+#+END_SRC
 * Languages Specific Modes and Support
 ** rust
    See https://www.reddit.com/r/rust/comments/a3da5g/my_entire_emacs_config_for_rust_in_fewer_than_20/
@@ -270,6 +284,18 @@
 
      )
 
+     (use-package prettier-js
+     :config
+     (add-hook 'web-mode-hook 'prettier-js-mode))
+   #+END_SRC
+** vue
+   #+NAME: vue-mode
+   #+BEGIN_SRC emacs-lisp
+     ;; (use-package vue-mode
+     ;;   :mode ("\\.vue\\'" . vue-mode)
+     ;;   :config
+     ;;   (add-hook 'vue-mode-hook #'lsp)
+     ;;   )
    #+END_SRC
 * Keybindings
 #+NAME: keybidings
