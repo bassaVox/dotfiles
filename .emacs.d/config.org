@@ -198,14 +198,14 @@
 ** editorconfig
 #+NAME: editorconfig
 #+BEGIN_SRC emacs-lisp
-(use-package editorconfig
-  :ensure t
-  :config
-  (editorconfig-mode 1)
-  (add-hook 'editorconfig-after-apply-functions
-  (lambda (props) (setq web-mode-block-padding 0)))
+  ;; (use-package editorconfig
+  ;;   :ensure t
+  ;;   :config
+  ;;   (editorconfig-mode 1)
+  ;;   (add-hook 'editorconfig-after-apply-functions
+  ;;   (lambda (props) (setq web-mode-block-padding 0)))
 
-)
+  ;; )
 #+END_SRC
 ** yasnippet
 Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnippet_via_usepackage/][reddit]] user
@@ -223,6 +223,11 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
     :ensure t)
 #+END_SRC
 * Languages Specific Modes and Support
+** all
+#+NAME: all-languages
+#+BEGIN_SRC emacs-lisp
+  (setq-default indent-tabs-mode nil) 
+#+END_SRC
 ** rust
    See https://www.reddit.com/r/rust/comments/a3da5g/my_entire_emacs_config_for_rust_in_fewer_than_20/
 
@@ -287,6 +292,12 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
      (use-package prettier-js
      :config
      (add-hook 'web-mode-hook 'prettier-js-mode))
+
+     (setq prettier-js-args '(
+     "--trailing-comma" "all"
+     "--bracket-spacing" "true"
+     "--single-quote" "true"
+     ))
    #+END_SRC
 ** vue
    #+NAME: vue-mode
