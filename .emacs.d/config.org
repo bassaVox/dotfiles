@@ -51,7 +51,7 @@
     #+NAME: theme
     #+BEGIN_SRC emacs-lisp
       (use-package doom-themes
-	:config (load-theme 'doom-dracula t))
+	:config (load-theme 'doom-gruvbox t))
     #+END_SRC
 
 *** Miscelania
@@ -241,18 +241,31 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
        :config (add-hook 'flycheck-mode-hook #'flycheck-rust-setup))
 #+END_SRC
 ** python
+Elpy configuration extracted from this [[https://medium.com/analytics-vidhya/managing-a-python-development-environment-in-emacs-43897fd48c6a][medium article]], this is a nice
+article and his python configuration is very comprehensive
 #+NAME: python-mode
 #+BEGIN_SRC emacs-lisp
   (use-package elpy
     :ensure t
+    :bind
+    (:map elpy-mode-map
+	  ("C-M-n" . elpy-nav-forward-block)
+	  ("C-M-p" . elpy-nav-backward-block))
+    :hook ((elpy-mode . flycheck-mode)
+	   (pyenv-mode . elpy-rpc-restart))
     :init
-    (elpy-enable))
+    (elpy-enable)
+    :config
+    (setq elpy-modules (delq 'elpy-module-flymake elpy-modules)))
 #+END_SRC
 
 #+NAME: blacken-mode
 #+BEGIN_SRC emacs-lisp
   (use-package blacken
-    :ensure t)
+    :ensure t
+    :hook (python-mode . blacken-mode)
+    :config
+    (setq blacken-line-lenth '88))
 #+END_SRC
 ** sml
   #+NAME: sml-mode
