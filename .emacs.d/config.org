@@ -9,7 +9,11 @@
 
 * Prelude
   Thanks renzix to help me kickstart this configuration file using org-mode
+
   https://www.youtube.com/watch?v=PsyPbjZOpYs&list=WL&index=44&t=865s
+
+  Another source of inspiration is the excelent documentation of a 
+  emacs configuration available on [[https://github.com/alhassy/emacs.d][A Life Configuring Emacs]].
 
 * Setup
   Install usepackage and bootstrap it
@@ -245,18 +249,23 @@ Elpy configuration extracted from this [[https://medium.com/analytics-vidhya/man
 article and his python configuration is very comprehensive
 #+NAME: python-mode
 #+BEGIN_SRC emacs-lisp
+  ;; (use-package elpy
+  ;;   :ensure t
+  ;;   :bind
+  ;;   (:map elpy-mode-map
+  ;; 	("C-M-n" . elpy-nav-forward-block)
+  ;; 	("C-M-p" . elpy-nav-backward-block))
+  ;;   :hook ((elpy-mode . flycheck-mode)
+  ;; 	 (pyenv-mode . elpy-rpc-restart))
+  ;;   :init
+  ;;   (elpy-enable)
+  ;;   :config
+  ;;   (setq elpy-modules (delq 'elpy-module-flymake elpy-modules)))
+
   (use-package elpy
     :ensure t
-    :bind
-    (:map elpy-mode-map
-	  ("C-M-n" . elpy-nav-forward-block)
-	  ("C-M-p" . elpy-nav-backward-block))
-    :hook ((elpy-mode . flycheck-mode)
-	   (pyenv-mode . elpy-rpc-restart))
     :init
-    (elpy-enable)
-    :config
-    (setq elpy-modules (delq 'elpy-module-flymake elpy-modules)))
+    (elpy-enable))
 #+END_SRC
 
 #+NAME: blacken-mode
@@ -310,6 +319,10 @@ article and his python configuration is very comprehensive
      ;;   (add-hook 'vue-mode-hook #'lsp)
      ;;   )
    #+END_SRC
+* Expendable
+#+BEGIN_SRC emacs-lisp
+  (use-package speed-type)
+#+END_SRC
 * Keybindings
 #+NAME: keybidings
 
