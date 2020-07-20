@@ -1,19 +1,16 @@
 #+TITLE: Emacs configuration
 #+AUTHOR: damenipotu
 
-#+SETUPFILE: https://fniessen.github.io/org-html-themes/setup/THEME-NAME.setup/theme-readtheorg.setup
-
 #+OPTION: num:nil
-
 #+PROPERTY: header-args :results silent
 
 * Prelude
-  Thanks renzix to help me kickstart this configuration file using org-mode
+  There are a couple of resources that can help you using org-mode to configure
+  emacs:
 
-  https://www.youtube.com/watch?v=PsyPbjZOpYs&list=WL&index=44&t=865s
-
-  Another source of inspiration is the excelent documentation of a 
-  emacs configuration available on [[https://github.com/alhassy/emacs.d][A Life Configuring Emacs]].
+  - [[https://www.youtube.com/channel/UCDEtZ7AKmwS0_GNJog01D2g/playlists][renzix]]
+  - [[https://github.com/alhassy/emacs.d][A Life Configuring Emacs]]
+  - [[https://www.youtube.com/channel/UCDEtZ7AKmwS0_GNJog01D2g/playlists][Youtube "Uncle Bob" playlist]]
 
 * Setup
   Install usepackage and bootstrap it
@@ -27,7 +24,7 @@
 			      ("melpa" . "https://melpa.org/packages/")))
    #+END_SRC   
 
-** bootstrap
+** bootstratp usepackage
 
    #+name: use-package
    #+BEGIN_SRC emacs-lisp
@@ -55,16 +52,41 @@
     #+NAME: theme
     #+BEGIN_SRC emacs-lisp
       (use-package doom-themes
-	:config (load-theme 'doom-gruvbox t))
+        :config (load-theme 'doom-gruvbox t)
+        (doom-themes-org-config)
+        )
+    #+END_SRC 
+    
+    By default, emacs' jumps the cursor, along with the content, 
+    to the middle of the screen when scrolling pass the end of the file.
+    To prevent those jumps:
+
+    #+BEGIN_SRC emacs-lisp
+      (setq scroll-conservatively 101 )
     #+END_SRC
 
+    Highlighting current line and making it more pronounceable when
+    changing windows or buffers.
+
+    #+BEGIN_SRC emacs-lisp
+      (when window-system (global-hl-line-mode t))
+      (use-package beacon
+        :ensure t
+        :init
+        (beacon-mode 1))
+
+    #+END_SRC
+    
 *** Miscelania
 
-    Just use y and n for prompt action
+    Just use y and n for prompt action. 
+    Preventing the "error sound", for example, when reaching the end of the
+    file.
 
-    #+NAME: yes-or-no
+    #+NAME: minor-miscelania
     #+BEGIN_SRC emacs-lisp
       (defalias 'yes-or-no-p 'y-or-n-p)
+      (setq ring-bell-function 'ignore)
     #+END_SRC
     
     
@@ -73,15 +95,29 @@
     #+NAME: backups
     #+BEGIN_SRC emacs-lisp
       (setq backup-directory-alist `(("." . "~/.backup_emacs"))
-	    backup-by-copying t
-	    delete-old-versions t
-	    kept-new-versions 10
-	    kept-old-versions 10
-	    version-control t
-	    auto-save-list-file-prefix nil)
+            backup-by-copying t
+            delete-old-versions t
+            kept-new-versions 10
+            kept-old-versions 10
+            version-control t
+            auto-save-list-file-prefix nil
+            auto-save-default nil)
     #+END_SRC
+
+    Disabling the Welcome screen
+    #+BEGIN_SRC emacs-lisp
+    (setq inhibit-startup-screen t)
     
-* Packages
+    #+END_SRC
+
+* Terminal
+#+BEGIN_SRC emacs-lisp
+  (defvar my-term-shell "/bin/bash")
+  (defadvice ansi-term (before force-bash)
+    (interactive (list my-term-shell)))
+  (ad-activate 'ansi-term)
+#+END_SRC
+* General Use Packages
 ** which-key
    shows keybindings as you type
 
@@ -112,12 +148,8 @@
        (helm-autoresize-mode t)
        (add-hook 'helm-minibuffer-set-up-hook 'helm-hide-minibuffer-maybe)
        (helm-mode t))
-  
-
-   #+END_SRC
-
+     #+END_SRC
 ** projectile
-
    Projectile manages projects. Installing the official one plus extension
 
    #+NAME: projectile
@@ -226,6 +258,48 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
   (use-package yasnippet-snippets
     :ensure t)
 #+END_SRC
+** avy
+   Allows you to navegate by character seen on any visible portion of
+   any opened window
+
+#+BEGIN_SRC emacs-lisp
+  (use-package avy
+    :ensure t)
+
+#+END_SRC
+** expand region
+   That feature of selecting text by expanding semantically significant portions may have
+   come from IntelliJ
+   #+BEGIN_SRC emacs-lisp
+     (use-package expand-region
+       :ensure t)
+
+   #+END_SRC
+** multiple cursors
+   That is one of the things you will see usefullness only if you practice...
+
+   #+BEGIN_SRC emacs-lisp
+     ;;installing it's dependency
+     (use-package cl-lib
+       :ensure t)
+     (use-package multiple-cursors
+       :ensure t)
+
+   #+END_SRC
+* Org Mode Related
+** ox-hugo
+   Let's try out hugo for static site generation. This package exports org
+   subtrees using markdown to the appropriate content folder of a Hugo site.
+   Hugo allegedly supports org markdown, but this package is very usefull
+   if you plan to use a single file and export posts, for example, by
+   subtrees.
+#+NAME: ox-hugo
+#+BEGIN_SRC emacs-lisp
+  (use-package ox-hugo
+    :ensure t
+    :after ox)
+#+END_SRC
+
 * Languages Specific Modes and Support
 ** all
 #+NAME: all-languages
@@ -334,9 +408,26 @@ article and his python configuration is very comprehensive
 #+BEGIN_SRC emacs-lisp
   (use-package speed-type)
 #+END_SRC
-* Keybindings
-#+NAME: keybidings
 
+* Custom Functions
+Loading this configuration file (binding are defined later):
+#+BEGIN_SRC emacs-lisp
+  (defun config-visit ()
+    (interactive)
+    (find-file "~/.emacs.d/config.org"))
+#+END_SRC
+
+Reloading this configuration file
+#+BEGIN_SRC emacs-lisp
+  (defun config-reload ()
+    (interactive)
+    (org-babel-load-file (expand-file-name "~/.emacs.d/config.org")))
+#+END_SRC
+
+* Keybindings Go Here
+  Keeping general bidings in one place
+
+#+NAME: keybidings
 #+BEGIN_SRC emacs-lisp
   (use-package general
     :config
@@ -344,5 +435,15 @@ article and his python configuration is very comprehensive
      "M-x" 'helm-M-x
      "C-x g" 'magit-status
      "M-p" 'projectile-command-map
-     "C-x C-f" 'helm-find-files))
+     "C-x C-f" 'helm-find-files
+     "C-x C-b" 'helm-buffers-list
+     "C-:" 'avy-goto-char
+     "M-g g" 'avy-goto-line
+     "M-g M-g" 'avy-goto-line
+     "C-c e" 'config-visit
+     "C-c r" 'config-reload
+     "C-." 'er/expand-region
+     "C-," 'mc/mark-next-like-this
+     ))
 #+END_SRC
+  
