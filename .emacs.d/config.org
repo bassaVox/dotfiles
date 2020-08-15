@@ -273,7 +273,6 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
    #+BEGIN_SRC emacs-lisp
      (use-package expand-region
        :ensure t)
-
    #+END_SRC
 ** multiple cursors
    That is one of the things you will see usefullness only if you practice...
@@ -299,7 +298,21 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
     :ensure t
     :after ox)
 #+END_SRC
-
+** plantuml
+   Well, this is not just for Org Mode but I usually make diagrams in it.
+#+BEGIN_SRC emacs-lisp
+  (use-package plantuml-mode
+    :ensure t
+    :init
+    (setq plantuml-default-exec-mode 'jar)
+    (setq plantuml-jar-path "/usr/share/plantuml/plantuml.jar")
+    (setq org-plantuml-jar-path (expand-file-name "/usr/share/plantuml/plantuml.jar"))
+    (setq org-startup-with-inline-images t)
+    (add-to-list 'org-src-lang-modes '("plantuml" . plantuml))
+    (org-babel-do-load-languages 'org-babel-load-languages '((plantuml .t )))
+    :interpreter ("plantuml" . plantuml-mode)
+    )
+#+END_SRC
 * Languages Specific Modes and Support
 ** all
 #+NAME: all-languages
@@ -404,11 +417,22 @@ article and his python configuration is very comprehensive
      ;;   (add-hook 'vue-mode-hook #'lsp)
      ;;   )
    #+END_SRC
+** racket
+#+BEGIN_SRC emacs-lisp
+    (use-package racket-mode
+      :ensure t
+      :init
+      (add-to-list 'org-src-lang-modes '("racket" . racket ))
+      ;; this won't work....you need og-racket manually installed for integration:
+      ;;(org-babel-do-load-languages 'org-babel-load-languages '((racket .t )))
+      :interpreter ("racket" . racket-mode)
+      )
+
+#+END_SRC
 * Expendable
 #+BEGIN_SRC emacs-lisp
   (use-package speed-type)
 #+END_SRC
-
 * Custom Functions
 Loading this configuration file (binding are defined later):
 #+BEGIN_SRC emacs-lisp
@@ -423,10 +447,8 @@ Reloading this configuration file
     (interactive)
     (org-babel-load-file (expand-file-name "~/.emacs.d/config.org")))
 #+END_SRC
-
-* Keybindings Go Here
+* General Keybindings Go Here
   Keeping general bidings in one place
-
 #+NAME: keybidings
 #+BEGIN_SRC emacs-lisp
   (use-package general
@@ -443,8 +465,21 @@ Reloading this configuration file
      "C-c e" 'config-visit
      "C-c r" 'config-reload
      "C-." 'er/expand-region
-     "C-," 'mc/mark-next-like-this
+     ;; "C-," 'mc/mark-next-like-this
+     "C-=" 'mc/mark-next-like-this
      "C-a" 'back-to-indentation
+     "M-<backspace>" 'delete-indentation ; C-<backspace> kills back word
      ))
+
+
 #+END_SRC
-  
+* Dead keys in emacs
+  On my ergodox I have dead keys "~" and "^" but also, the respective non dead keys
+  counterparts, so I can use keybinds like M-^ (org-delete-identation) and type
+  those characters without needing to type a space after them. But for Emacs the
+  non dead keys "^" and "~" won't work unless I use this line,
+  [[https://www.emacswiki.org/emacs/DeadKeys][as suggested by the wiki]]:
+#+BEGIN_SRC  emacs-lisp
+(require 'iso-transl)
+
+#+END_SRC
