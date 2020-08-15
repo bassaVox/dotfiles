@@ -444,6 +444,7 @@ Reloading this configuration file
      "C-c r" 'config-reload
      "C-." 'er/expand-region
      "C-," 'mc/mark-next-like-this
+     "C-a" 'back-to-indentation
      ))
 #+END_SRC
   
