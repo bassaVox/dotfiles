@@ -275,6 +275,7 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
        :ensure t)
    #+END_SRC
 ** multiple cursors
+
    That is one of the things you will see usefullness only if you practice...
 
    #+BEGIN_SRC emacs-lisp
@@ -285,6 +286,15 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
        :ensure t)
 
    #+END_SRC
+** dumb-jump
+   I've build from source ripgrep (written in rust) beforehand, which this package
+   can use to jump to definition
+
+   #+BEGIN_SRC emacs-lisp
+     (use-package dumb-jump
+       :ensure t)
+   #+END_SRC
+
 * Org Mode Related
 ** ox-hugo
    Let's try out hugo for static site generation. This package exports org
