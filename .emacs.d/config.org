@@ -475,6 +475,7 @@ Reloading this configuration file
      "C-c e" 'config-visit
      "C-c r" 'config-reload
      "C-." 'er/expand-region
+     ;; "C-," 'mc/mark-next-like-this
      "C-=" 'mc/mark-next-like-this
      "C-a" 'back-to-indentation
      "M-<backspace>" 'delete-indentation ; C-<backspace> kills back word
