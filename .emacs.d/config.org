@@ -234,14 +234,14 @@
 ** editorconfig
 #+NAME: editorconfig
 #+BEGIN_SRC emacs-lisp
-  ;; (use-package editorconfig
-  ;;   :ensure t
-  ;;   :config
-  ;;   (editorconfig-mode 1)
-  ;;   (add-hook 'editorconfig-after-apply-functions
-  ;;   (lambda (props) (setq web-mode-block-padding 0)))
+   (use-package editorconfig
+     :ensure t
+     :config
+     (editorconfig-mode 1)
+     (add-hook 'editorconfig-after-apply-functions
+     (lambda (props) (setq web-mode-script-padding 0)))
 
-  ;; )
+   )
 #+END_SRC
 ** yasnippet
 Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnippet_via_usepackage/][reddit]] user
@@ -394,7 +394,6 @@ article and his python configuration is very comprehensive
 
      (setq
      web-mode-markup-indent-offset 2
-     web-mode-css-indent-offset 2
      web-mode-code-indent-offset 2
      web-mode-enable-auto-closing t
      web-mode-enable-auto-opening t
@@ -403,15 +402,14 @@ article and his python configuration is very comprehensive
      web-mode-script-padding 0
      web-mode-block-padding 0
      web-mode-style-padding 0
-     web-mode-code-indent-offset 2
      )
 
      )
 
      (use-package prettier-js
      :config
-     (add-hook 'web-mode-hook 'prettier-js-mode))
-
+     ;; (add-hook 'web-mode-hook 'prettier-js-mode))
+     )
      (setq prettier-js-args '(
      "--trailing-comma" "all"
      "--bracket-spacing" "true"
