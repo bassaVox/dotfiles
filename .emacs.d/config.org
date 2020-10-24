@@ -364,10 +364,10 @@ article and his python configuration is very comprehensive
   ;;   :config
   ;;   (setq elpy-modules (delq 'elpy-module-flymake elpy-modules)))
 
-  (use-package elpy
-    :ensure t
-    :init
-    (elpy-enable))
+  ;; (use-package elpy
+  ;;   :ensure t
+  ;;   :init
+  ;;   (elpy-enable))
 #+END_SRC
 
 #+NAME: blacken-mode
