@@ -437,6 +437,14 @@ article and his python configuration is very comprehensive
       )
 
 #+END_SRC
+
+** r
+   #+BEGIN_SRC emacs-lisp
+     (use-package ess
+       :ensure t
+       )
+
+   #+END_SRC
 * Expendable
 #+BEGIN_SRC emacs-lisp
   (use-package speed-type)
