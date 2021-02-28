@@ -296,6 +296,12 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
    #+END_SRC
 
 * Org Mode Related
+** org-babel
+#+BEGIN_SRC emacs-lisp
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((python . t)))   
+#+END_SRC
 ** ox-hugo
    Let's try out hugo for static site generation. This package exports org
    subtrees using markdown to the appropriate content folder of a Hugo site.
