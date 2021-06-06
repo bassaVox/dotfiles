@@ -1,5 +1,5 @@
 #+TITLE: Emacs configuration
-#+AUTHOR: damenipotu
+#+AUTHOR: bassavox
 
 #+OPTION: num:nil
 #+PROPERTY: header-args :results silent
@@ -11,17 +11,24 @@
   - [[https://www.youtube.com/channel/UCDEtZ7AKmwS0_GNJog01D2g/playlists][renzix]]
   - [[https://github.com/alhassy/emacs.d][A Life Configuring Emacs]]
   - [[https://www.youtube.com/channel/UCDEtZ7AKmwS0_GNJog01D2g/playlists][Youtube "Uncle Bob" playlist]]
+  - [[https://www.youtube.com/watch?v=74zOY-vgkyw&list=PLEoMzSkcN8oPH1au7H6B7bBJ4ZO7BXjSZ&index=1][System Crafter's 'Emacs from Scratch']]
 
 * Setup
-  Install usepackage and bootstrap it
+  Setting repositories and usepackage
 ** setup repositories
 
    Melpa and Elpa enabling
 
    #+BEGIN_SRC emacs-lisp
      (setq package-enable-at-startup nil
-	   package-archives '(("elpa" . "https://elpa.gnu.org/packages/")
-			      ("melpa" . "https://melpa.org/packages/")))
+           package-archives '(("elpa" . "https://elpa.gnu.org/packages/")
+                              ("melpa" . "https://melpa.org/packages/")
+                              ("melpa-stable" . "https://stable.melpa.org/packages")
+                              ("org" . "https://orgmode.org/elpa")))
+
+     (package-initialize)
+     (unless package-archive-contents
+       (package-refresh-contents))
    #+END_SRC   
 
 ** bootstratp usepackage
@@ -33,33 +40,52 @@
        (package-install 'use-package))
      (require 'use-package)
      (require 'use-package-ensure)
-     (setq use-package-always-ensure t)
+     (setq use-package-always-ensure t) ;; so you don't need to invoke ':ensure t' for every package
    #+END_SRC 
 
 ** preferences
-*** Display
-    Removing upper bar and scroll
+*** Display & Appearance
+**** Stripping things out
+    Removing upper bar and scroll and giving some customized breathing room on all frames:
 
     #+NAME: bar-disable
     #+BEGIN_SRC emacs-lisp
       (menu-bar-mode -1)
       (scroll-bar-mode -1)
       (tool-bar-mode -1)
+      (set-fringe-mode 5)
     #+END_SRC
-
-    Nice dark Theme
-
+**** Theme and modeline
+    Doom-Moonlight, Doom-Gruvbox, Doom-vibrant and Doom-Tomorrownight are amongst
+    my favourites themes!
     #+NAME: theme
     #+BEGIN_SRC emacs-lisp
       (use-package doom-themes
-        :config (load-theme 'doom-gruvbox t)
+        :config (load-theme 'doom-vibrant t)
         (doom-themes-org-config)
         )
     #+END_SRC 
     
+    Doom has a nice, minimalistic, modeline. You may have to run "all-the-icons-install-fonts".
+    #+NAME: modeline
+    #+BEGIN_SRC emacs-lisp
+      ;; all-the-icons is required for doom-modeline
+      (use-package all-the-icons)
+      (use-package doom-modeline
+        :ensure t
+        :init (doom-modeline-mode 1)
+        :config
+        (set-face-attribute 'mode-line nil :family "Noto Sans" :height 80)
+        (set-face-attribute 'mode-line-inactive nil :family "Noto Sans" :height 80)
+        :custom ((doom-modeline-height 1)))
+      (column-number-mode)
+
+
+    #+END_SRC
+**** Cursor and Movement
     By default, emacs' jumps the cursor, along with the content, 
     to the middle of the screen when scrolling pass the end of the file.
-    To prevent those jumps:
+    To prevent those jumps use:
 
     #+BEGIN_SRC emacs-lisp
       (setq scroll-conservatively 101 )
@@ -75,6 +101,14 @@
         :init
         (beacon-mode 1))
 
+    #+END_SRC
+*** Fonts
+    My go-to fonts are "Source Code Pro", [[https://www.jetbrains.com/lp/mono/]["JetBrains Mono"]], "Fira Code Retina" and "Ubuntu Mono"
+    and I my change between them from time to time. I haven't set ligatures yet, but I really don't
+    mind much about that for now.
+    #+NAME:fonts
+    #+BEGIN_SRC emacs-lisp
+      (set-face-attribute 'default nil :font "Fira Code Retina" :height 107)
     #+END_SRC
     
 *** Miscelania
@@ -119,14 +153,20 @@
 #+END_SRC
 * General Use Packages
 ** which-key
-   shows keybindings as you type
+   Shows keybindings as you type
 
    #+NAME: which-key
    #+BEGIN_SRC emacs-lisp
      (use-package which-key
-       :config (which-key-mode))
+       :init (which-key-mode)
+       :diminish which-key-mode
+       :config
+       (setq which-key-idle-delay 0.8))
    #+END_SRC
 ** magit
+   Modeline information about branches is not always [[https://magit.vc/manual/magit/The-mode_002dline-information-isn_0027t-always-up_002dto_002ddate.html][up-to-date]],
+   you can force upate from 'vc' package with (setq auto-revert-check-vc-info t)
+   with some performance penalty
    #+NAME: magit
    #+BEGIN_SRC emacs-lisp
      (use-package magit)
@@ -149,8 +189,14 @@
        (add-hook 'helm-minibuffer-set-up-hook 'helm-hide-minibuffer-maybe)
        (helm-mode t))
      #+END_SRC
+*** helm-rg
+#+NAME: helm-rg
+#+BEGIN_SRC emacs-lisp
+(use-package helm-rg)
+
+#+END_SRC
 ** projectile
-   Projectile manages projects. Installing the official one plus extension
+   Projectile manages projects.
 
    #+NAME: projectile
    #+BEGIN_SRC emacs-lisp
@@ -158,6 +204,7 @@
        :config
        (projectile-mode t)
        (helm-projectile-on))
+
    #+END_SRC
 ** company
    
@@ -178,30 +225,34 @@
 
 ** lsp-mode
    Needed by company. Provides IDE-like experience. TODO: integrate with python
-
+   See [[https://emacs-lsp.github.io/lsp-mode/page/lsp-pyls/][python support.]] See [[https://github.com/mattduck/dotfiles/blob/master/emacs.d.symlink/init.org#lsp-base-packages][other's configs]]
    #+NAME: lsp-mode
    #+BEGIN_SRC emacs-lisp
      (use-package lsp-mode
        :commands lsp
        :hook
        ((scala-mode . lsp)
-	(python-mode . lsp)
-	(js-mode . lsp)
-	(rust-mode . lsp)
-	(web-mode . lsp)
-	(sh-mode . lsp)
+        (python-mode . lsp)
+        (js-mode . lsp)
+        (rust-mode . lsp)
+        (web-mode . lsp)
+        (sh-mode . lsp)
         (vue-mode . lsp))
        :config 
        (setq lsp-prefer-flymake nil
-	     lsp-enable-snippet t
-	     lsp-auto-execute-action t
-	     lsp-eldoc-render-all t
-	     lsp-enable-completion-at-point t
-	     lsp-enable-xref t
-	     lsp-enable-indentation t))
+             lsp-enable-snippet t
+             lsp-auto-execute-action t
+             lsp-eldoc-render-all t
+             lsp-enable-completion-at-point t
+             lsp-enable-xref t
+             lsp-enable-indentation t)
+       :bind-keymap
+       ("C-?" . lsp-command-map)
+
+       )
+
 
      ;; lisp-ui adds inline UI element
-
      (use-package lsp-ui
        :after lsp-mode
        :hook (lsp-mode-hook . lsp-ui-mode))
@@ -210,8 +261,8 @@
        :after '(company lsp-mode)
        :config
        (setq company-lsp-cache-candidates t
-	     company-lsp-async t
-	     company-lsp-enable-snippet t)
+             company-lsp-async t
+             company-lsp-enable-snippet t)
        (push 'company-lsp company-backends))
 
      (use-package company-box
@@ -295,12 +346,98 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
        :ensure t)
    #+END_SRC
 
+** rainbow everywhere
+#+NAME: rainbow-delimiters
+#+BEGIN_SRC emacs-lisp
+  (use-package rainbow-delimiters
+    :hook (prog-mode . rainbow-delimiters-mode))
+#+END_SRC
+** being helpful
+#+NAME: helpful
+#+BEGIN_SRC emacs-lisp
+  (use-package helpful
+    :bind
+    ([remap describe-function] . helpful-callable)
+    ([remap describe-command] . helpful-command)
+    ([remap describe-variable] . helpful-variable)
+    ([remap describe-key] . helpful-key))
+#+END_SRC
 * Org Mode Related
+  Generally I go to [[http://doc.norang.ca/org-mode.html][a good workflow explanation]] to get ideas on using org mode.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package org
+    :config
+    (setq org-agenda-files
+          '("~/git/org/"))
+    (setq org-todo-keywords
+          '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")
+          (sequence "BACKLOG(b)" "READY(r)" "ACTIVE(a)" "|" "COMPLETED(c)" "CANC(k)" )))
+
+  (setq org-agenda-custom-commands
+        '(
+          ("n" todo "NEXT")
+          ("h" "Agenda and Home-related tasks"
+           ((agenda)
+            (tags-todo "Cleaning")
+            (tags "Cleaning"
+                  ((org-agenda-sorting-strategy '(priority-up)))))
+           ((org-agenda-sorting-strategy '(priority-down))))
+          ("o" "Agenda and Office-related tasks"
+           ((agenda)
+            (tags-todo "@office")
+            (tags "@office")))))
+
+    (setq org-tag-alist
+          '((:startgroup . nil)
+            ;; mutually exclusive tags of location
+            ("@home" . ?h)
+            ("@office" . ?o)
+            ("@errand" . ?e)
+            (:endgroup . nil)
+            ;; mutually exclusive tags of action
+            (:startgroup . nil)
+            ("Cleaning" . ?c)
+            ("Thinking" . ?t)
+            ("Shopping" . ?s)
+            ("Practicing" . ?p)
+            (:endgroup . nil)
+            ("idea" . ?i)
+            ("funny" . ?y)
+            ("habit" . ?h)
+            ("personal" . ?p)))
+
+    (setq org-refile-targets
+          '(("arquivar.org" :maxlevel . 9)))
+    ;; saving after refiling
+    (advice-add 'org-refile :after 'org-save-all-org-buffers)
+    (setq org-capture-templates
+      '(("t" "Todo" entry (file+headline "~/git/org/anotar.org" "Inbox")
+         "* TODO %?\n  %i\n  %a")
+        ("j" "Journal" entry (file+datetree "~/git/org/lembrar.org")
+         "* %?\nEntered on %U\n  %i\n  %a")))
+
+    ;; tracking habits
+    (require 'org-habit)
+    (add-to-list 'org-modules 'org-habit)
+    (setq org-habit-graph-column 60)
+    :custom
+    (org-agenda-start-with-log-mode t) ;; present a log intraday when logging
+    (org-log-done 'time)
+    (org-log-into-drawer t))
+#+END_SRC
 ** org-babel
 #+BEGIN_SRC emacs-lisp
-(org-babel-do-load-languages
- 'org-babel-load-languages
- '((python . t)))   
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '(
+     (python . t)
+     (shell . t)
+     (latex . t)
+     (scheme . t)
+     (R . t)
+     (lilypond . t)
+     ))
 #+END_SRC
 ** ox-hugo
    Let's try out hugo for static site generation. This package exports org
@@ -329,6 +466,12 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
     :interpreter ("plantuml" . plantuml-mode)
     )
 #+END_SRC
+** htmlize
+#+BEGIN_SRC emacs-lisp
+(use-package htmlize)
+
+#+END_SRC
+
 * Languages Specific Modes and Support
 ** all
 #+NAME: all-languages
@@ -383,6 +526,12 @@ article and his python configuration is very comprehensive
     :hook (python-mode . blacken-mode)
     :config
     (setq blacken-line-lenth '88))
+#+END_SRC
+
+#+NAME: python-interpreter
+#+BEGIN_SRC emacs-lisp
+(setq python-shell-interpreter "/usr/bin/python3.9")
+
 #+END_SRC
 ** sml
   #+NAME: sml-mode
@@ -445,15 +594,39 @@ article and his python configuration is very comprehensive
 #+END_SRC
 
 ** r
-   #+BEGIN_SRC emacs-lisp
-     (use-package ess
-       :ensure t
-       )
+#+BEGIN_SRC emacs-lisp
+(use-package ess)
 
-   #+END_SRC
+#+END_SRC
+** MIT-scheme
+   So you want to read [[https://mitpress.mit.edu/sites/default/files/sicp/full-text/book/book.html][SICP]]...
+   Go install scheme with "sudo apt install mit-scheme" on Ubuntu.
+#+NAME: giser
+#+BEGIN_SRC emacs-lisp
+  (use-package geiser)
+  (setq geiser-active-implementations '(mit))
+#+END_SRC
+** clojure
+#+BEGIN_SRC emacs-lisp
+    (use-package clojure-mode
+      :ensure t
+      )
+#+END_SRC
+#+BEGIN_SRC emacs-lisp
+  (use-package cider
+    :ensure t
+    )
+
+#+END_SRC
+
 * Expendable
 #+BEGIN_SRC emacs-lisp
   (use-package speed-type)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (use-package command-log-mode)
+
 #+END_SRC
 * Custom Functions
 Loading this configuration file (binding are defined later):
@@ -469,31 +642,53 @@ Reloading this configuration file
     (interactive)
     (org-babel-load-file (expand-file-name "~/.emacs.d/config.org")))
 #+END_SRC
-* General Keybindings Go Here
-  Keeping general bidings in one place
+* General Keybindings
+Trying to keep keybindings in one place
 #+NAME: keybidings
 #+BEGIN_SRC emacs-lisp
+
   (use-package general
     :config
     (general-define-key
      "M-x" 'helm-M-x
      "C-x g" 'magit-status
      "M-p" 'projectile-command-map
+     "C-c p" 'projectile-command-map
      "C-x C-f" 'helm-find-files
      "C-x C-b" 'helm-buffers-list
      "C-:" 'avy-goto-char
      "M-g g" 'avy-goto-line
      "M-g M-g" 'avy-goto-line
+     "C-c a" 'org-agenda
+     "C-c c" 'org-capture
      "C-c e" 'config-visit
+     "C-c l" 'org-store-link
      "C-c r" 'config-reload
      "C-." 'er/expand-region
      ;; "C-," 'mc/mark-next-like-this
      "C-=" 'mc/mark-next-like-this
      "C-a" 'back-to-indentation
      "M-<backspace>" 'delete-indentation ; C-<backspace> kills back word
-     ))
+     ;; changing keybidings due to my new layout "DonTyQ"
+     ;; https://configure.zsa.io/ergodox-ez/layouts/RlEeW/latest/0
+     "C-b" 'transpose-chars
+     "C-f" 'isearch-forward
+     "C-t" 'forward-char
+     "C-s" 'backward-char
+     )
+    (general-create-definer bassavox/leader-key :prefix "C-!")
+    (bassavox/leader-key
+      "t" '(:ignore t :which-key "Text")))
 
-
+  (use-package hydra)
+  (defhydra hydra-text-scale (:timeout 4)
+    "zoom"
+    ("j" text-scale-increase "in")
+    ("k" text-scale-decrease "out")
+    ("r" (text-scale-set 0) "reset" :exit t)
+    ("f" nil "finished" :exit t))
+  (bassavox/leader-key
+    "ts" '(hydra-text-scale/body :which-key "scale-text"))
 #+END_SRC
 * Dead keys in emacs
   On my ergodox I have dead keys "~" and "^" but also, the respective non dead keys
@@ -505,3 +700,15 @@ Reloading this configuration file
 (require 'iso-transl)
 
 #+END_SRC
+* Looking forward to
+  Here goes the list of packages I want to try out someday:
+** Forge
+   [[https://emacsair.me/2018/12/19/forge-0.1/][link]]
+   Integrating gitlab or github API
+   
+** org-wild-notifier
+   Getting  notification integration for org-agenda views.
+   [[https://github.com/akhramov/org-wild-notifier.el][github]]
+** declarative org capture templates
+   Easier syntax for Org Capture
+   [[https://github.com/progfolio/doct][github]]
