@@ -23,8 +23,8 @@
      (setq package-enable-at-startup nil
            package-archives '(("elpa" . "https://elpa.gnu.org/packages/")
                               ("melpa" . "https://melpa.org/packages/")
-                              ("melpa-stable" . "https://stable.melpa.org/packages")
-                              ("org" . "https://orgmode.org/elpa")))
+                              ("melpa-stable" . "https://stable.melpa.org/packages/")
+                              ("org" . "https://orgmode.org/elpa/")))
 
      (package-initialize)
      (unless package-archive-contents
@@ -315,7 +315,11 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
 
 #+BEGIN_SRC emacs-lisp
   (use-package avy
-    :ensure t)
+    :ensure t
+    :config
+    ;; home row keys
+    (setq avy-keys '(?c ?i ?e ?a ?n ?t ?s ?p))
+)
 
 #+END_SRC
 ** expand region
@@ -373,14 +377,14 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
     (setq org-todo-keywords
           '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")
           (sequence "BACKLOG(b)" "READY(r)" "ACTIVE(a)" "|" "COMPLETED(c)" "CANC(k)" )))
-
+    (setq org-attach-id-dir '("~/Dropbox/org-attachments"))
   (setq org-agenda-custom-commands
         '(
           ("n" todo "NEXT")
           ("h" "Agenda and Home-related tasks"
            ((agenda)
-            (tags-todo "Cleaning")
-            (tags "Cleaning"
+            (tags-todo "@home")
+            (tags "@home"
                   ((org-agenda-sorting-strategy '(priority-up)))))
            ((org-agenda-sorting-strategy '(priority-down))))
           ("o" "Agenda and Office-related tasks"
@@ -395,8 +399,8 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
             ("@office" . ?o)
             ("@errand" . ?e)
             (:endgroup . nil)
-            ;; mutually exclusive tags of action
             (:startgroup . nil)
+            ;; mutually exclusive tags of action
             ("Cleaning" . ?c)
             ("Thinking" . ?t)
             ("Shopping" . ?s)
@@ -404,8 +408,8 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
             (:endgroup . nil)
             ("idea" . ?i)
             ("funny" . ?y)
-            ("habit" . ?h)
-            ("personal" . ?p)))
+            ("habit" . ?b)
+            ("personal" . ?l)))
 
     (setq org-refile-targets
           '(("arquivar.org" :maxlevel . 9)))
@@ -428,10 +432,17 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
 #+END_SRC
 ** org-babel
 #+BEGIN_SRC emacs-lisp
+(use-package ein)
+
+
+#+END_SRC
+#+BEGIN_SRC emacs-lisp
   (org-babel-do-load-languages
    'org-babel-load-languages
    '(
      (python . t)
+     (ein . t)
+     (ipython . t)
      (shell . t)
      (latex . t)
      (scheme . t)
@@ -471,7 +482,56 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
 (use-package htmlize)
 
 #+END_SRC
+* Knowledge Management
+- A [[https://www.youtube.com/watch?v=EjQRqd_3AnA][good example]].
+- [[https://www.orgroam.com/manual.html#Introduction][Org-roam documentation]]
+** pdf-tools
+There are some [[https://github.com/politza/pdf-tools][dependencies]] to pdf-tools. After installing it you can, for example,
+render a pdf in 'midnight mode' which, by itself, justifies you installing it.
+(M-x pdf-tools-help RET) will help.
 
+TODO: For some reason, when visiting a PDF file via org-noter, running M-x pdf-tools-install
+was required for pdf-tools to load. 
+#+BEGIN_SRC emacs-lisp
+(use-package pdf-tools)
+
+#+END_SRC
+** org-noter
+Org noter will open another frame with two windows for you to make annotations, 
+this is called a 'annotation session', that can be killed when on document buffer 
+by pressing 'q'. Just press 'i' to make an annotation.
+
+Just (M-x org-noter) on a org file with the correct property and you can create
+or review your notes on a pdf.
+
+#+NAME: org-noter 
+#+BEGIN_SRC emacs-lisp
+(use-package org-noter)
+
+#+END_SRC
+** org roam
+   Following the Zettelkasten method, [[https://www.orgroam.com/manual.html][org roam]] helps bulding a network of permanent
+   notes with hyperlinks.
+   For the "fleeting notes", notes capture when doing some other activity that are usually
+   processed within a day, one can use both org-capture or Org Roam's "Dailies".
+
+   
+   To install it, execute first: 
+   (use-package org-roam :ensure t)
+
+#+BEGIN_SRC emacs-lisp
+  (use-package org-roam
+    :ensure t
+    :init
+    (setq org-roam-v2-ack t) ; to inhibit message about new version 2
+    :custom
+    (org-roam-directory "~/git/org-roam")
+    :bind (("C-c n l" . org-roam-buffer-toggle)
+           ("C-c n f" . org-roam-node-find)
+           ("C-c n i" . org-roam-node-insert))
+    :config
+    (org-roam-setup))
+#+END_SRC   
 * Languages Specific Modes and Support
 ** all
 #+NAME: all-languages
@@ -524,6 +584,7 @@ article and his python configuration is very comprehensive
   (use-package blacken
     :ensure t
     :hook (python-mode . blacken-mode)
+    :hook (ein-python . blacken-mode)
     :config
     (setq blacken-line-lenth '88))
 #+END_SRC
@@ -644,6 +705,7 @@ Reloading this configuration file
 #+END_SRC
 * General Keybindings
 Trying to keep keybindings in one place
+
 #+NAME: keybidings
 #+BEGIN_SRC emacs-lisp
 
@@ -673,18 +735,21 @@ Trying to keep keybindings in one place
      ;; https://configure.zsa.io/ergodox-ez/layouts/RlEeW/latest/0
      "C-b" 'transpose-chars
      "C-f" 'isearch-forward
-     "C-t" 'forward-char
-     "C-s" 'backward-char
+     "C-s" 'forward-char
+     "C-t" 'backward-char
      )
+    (general-define-key
+     :keymaps 'isearch-mode-map
+     "C-t" 'isearch-repeat-backward)
     (general-create-definer bassavox/leader-key :prefix "C-!")
     (bassavox/leader-key
       "t" '(:ignore t :which-key "Text")))
 
   (use-package hydra)
   (defhydra hydra-text-scale (:timeout 4)
-    "zoom"
-    ("j" text-scale-increase "in")
-    ("k" text-scale-decrease "out")
+    "text zoom"
+    ("n" text-scale-increase "in")
+    ("t" text-scale-decrease "out")
     ("r" (text-scale-set 0) "reset" :exit t)
     ("f" nil "finished" :exit t))
   (bassavox/leader-key
@@ -712,3 +777,7 @@ Trying to keep keybindings in one place
 ** declarative org capture templates
    Easier syntax for Org Capture
    [[https://github.com/progfolio/doct][github]]
+** better search keybindings
+   [[https://www.emacswiki.org/emacs/IncrementalSearch][See emacs wiki]]
+** better resizing windows, like text resizing
+** 
