@@ -391,7 +391,7 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
            ((agenda)
             (tags-todo "@office")
             (tags "@office")))))
-
+  
     (setq org-tag-alist
           '((:startgroup . nil)
             ;; mutually exclusive tags of location
@@ -410,7 +410,7 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
             ("funny" . ?y)
             ("habit" . ?b)
             ("personal" . ?l)))
-
+  
     (setq org-refile-targets
           '(("arquivar.org" :maxlevel . 9)))
     ;; saving after refiling
@@ -418,13 +418,16 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
     (setq org-capture-templates
       '(("t" "Todo" entry (file+headline "~/git/org/anotar.org" "Inbox")
          "* TODO %?\n  %i\n  %a")
+        ("f" "Fleeting Note" entry (file+headline "~/git/org/anotar.org" "Rethink or delete")
+         "* %?\n %i\n")
         ("j" "Journal" entry (file+datetree "~/git/org/lembrar.org")
          "* %?\nEntered on %U\n  %i\n  %a")))
-
+  
     ;; tracking habits
     (require 'org-habit)
     (add-to-list 'org-modules 'org-habit)
     (setq org-habit-graph-column 60)
+    (setq org-startup-folded t)
     :custom
     (org-agenda-start-with-log-mode t) ;; present a log intraday when logging
     (org-log-done 'time)
@@ -485,8 +488,10 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
 * Knowledge Management
 - A [[https://www.youtube.com/watch?v=EjQRqd_3AnA][good example]].
 - [[https://www.orgroam.com/manual.html#Introduction][Org-roam documentation]]
+- [[https://youtu.be/Wy9WvF5gWYg][org roam and bibitex]]
+  
 ** pdf-tools
-There are some [[https://github.com/politza/pdf-tools][dependencies]] to pdf-tools. After installing it you can, for example,
+   There are some [[https://github.com/politza/pdf-tools][dependencies]] to pdf-tools. After installing it you can, for example,
 render a pdf in 'midnight mode' which, by itself, justifies you installing it.
 (M-x pdf-tools-help RET) will help.
 
@@ -520,18 +525,65 @@ or review your notes on a pdf.
    (use-package org-roam :ensure t)
 
 #+BEGIN_SRC emacs-lisp
-  (use-package org-roam
-    :ensure t
-    :init
-    (setq org-roam-v2-ack t) ; to inhibit message about new version 2
-    :custom
-    (org-roam-directory "~/git/org-roam")
-    :bind (("C-c n l" . org-roam-buffer-toggle)
-           ("C-c n f" . org-roam-node-find)
-           ("C-c n i" . org-roam-node-insert))
-    :config
-    (org-roam-setup))
-#+END_SRC   
+    (use-package org-roam
+      :after org
+      :ensure t
+      :init
+      (setq org-roam-v2-ack t) ; to inhibit message about new version 2
+      :custom
+      (org-roam-directory "~/git/org-roam")
+      (org-roam-completion-everywhere t)
+      (org-roam-capture-templates
+       '(("d" "default" plain
+          "%?"
+          :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+          :unnarrowed t)))
+      (org-roam-dailies-capture-templates
+       '(("d" "default" entry
+          "* [%<%H:%M>] %?"
+          :if-new (file+head "%<%Y-%m-%d>.org" "#+title: %<%Y-%m-%d>\n")
+          :unarrowed t
+  )))
+      :bind
+      (("C-c n f" . org-roam-node-find)
+       ("C-c n g" . org-roam-graph)
+       ("C-c n r" . org-roam-node-random)		    
+       (:map org-mode-map
+             (("C-c n i" . org-roam-node-insert)
+              ("C-c n o" . org-id-get-create)
+              ("C-c n t" . org-roam-tag-add)
+              ("C-c n a" . org-roam-alias-add)
+              ("C-c n l" . org-roam-buffer-toggle))))
+      :bind-keymap
+      ("C-c n d" . org-roam-dailies-map)
+      :config
+      (require 'org-roam-dailies)
+      (org-roam-setup)
+      )
+#+END_SRC
+
+*** Usage
+    [[https://lucidmanager.org/productivity/taking-notes-with-emacs-org-mode-and-org-roam/][intro]]
+    With org-roam completion you can link notes just by typing some of the initial words of it
+    on another note and hit C-M-i.
+
+    One can assign a id to any heading inside a Roam's note, creating a subnote (I don't really see
+    use cases for this right now, but, anyway, you can do that with *org-id-get-create*
+
+    If you have notes with the same name, you can insert a roam-aliases property on the node:
+    *org-roam-alias-add*
+
+    With the Roam buffer you can see the backlinks to that node while visiting it,
+    show the buffer using (C-c n l).
+** latex
+   Cdlatex provides [[https://orgmode.org/manual/CDLaTeX-mode.html#CDLaTeX-mode][some expansions]], that can be used inside org-mode
+   (when on org mode you enable via M-x org-cdlatex-mode)
+   
+   #+begin_src emacs-lisp
+     (use-package tex
+       :ensure auctex
+       :ensure cdlatex)
+   #+end_src
 * Languages Specific Modes and Support
 ** all
 #+NAME: all-languages
@@ -765,7 +817,7 @@ Trying to keep keybindings in one place
 (require 'iso-transl)
 
 #+END_SRC
-* Looking forward to
+* Next Steps
   Here goes the list of packages I want to try out someday:
 ** Forge
    [[https://emacsair.me/2018/12/19/forge-0.1/][link]]
@@ -780,4 +832,4 @@ Trying to keep keybindings in one place
 ** better search keybindings
    [[https://www.emacswiki.org/emacs/IncrementalSearch][See emacs wiki]]
 ** better resizing windows, like text resizing
-** 
+*** 
