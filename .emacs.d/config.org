@@ -195,6 +195,30 @@
 (use-package helm-rg)
 
 #+END_SRC
+*** helm-bibtex
+   #+begin_src emacs-lisp
+     ;; Change fields and format
+     (setq bibtex-user-optional-fields '(("keywords" "Keywords to describe the entry" "")
+                                         ("file" "Link to document file." ":"))
+           bibtex-align-at-equal-sign t)
+     
+     (setq bib-files-directory (directory-files
+                                (concat (getenv "HOME") "/git/org/bibliography/") t
+                                "^[A-Z|a-z].+.bib$")
+           pdf-files-directory (concat (getenv "HOME") "/Dropbox/pdf/"))
+     
+   #+end_src
+
+    
+    #+begin_src emacs-lisp
+      (use-package helm-bibtex
+        :config
+        (require 'helm-config)
+        (setq bibtex-completion-bibliography bib-files-directory
+              bibtex-completion-library-path pdf-files-directory
+              bibtex-completion-pdf-field "file"
+              bibtex-completion-notes-path org-directory))
+    #+end_src
 ** projectile
    Projectile manages projects.
 
@@ -366,6 +390,15 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
     ([remap describe-variable] . helpful-variable)
     ([remap describe-key] . helpful-key))
 #+END_SRC
+** flyspell
+   Requires [[https://github.com/hunspell/hunspell][Hunspell]].
+   #+begin_src emacs-lisp
+     (use-package flyspell
+                 :config
+                 (setq ispell-program-name "hunspell"
+                       ispell-dictionary "pt_BR")
+                 :hook (text-mode . flyspell-mode))
+   #+end_src
 * Org Mode Related
   Generally I go to [[http://doc.norang.ca/org-mode.html][a good workflow explanation]] to get ideas on using org mode.
 
@@ -378,6 +411,7 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
           '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")
           (sequence "BACKLOG(b)" "READY(r)" "ACTIVE(a)" "|" "COMPLETED(c)" "CANC(k)" )))
     (setq org-attach-id-dir '("~/Dropbox/org-attachments"))
+    (setq org-directory (concat (getenv "HOME") "/git/org"))
   (setq org-agenda-custom-commands
         '(
           ("n" todo "NEXT")
@@ -451,6 +485,7 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
      (scheme . t)
      (R . t)
      (lilypond . t)
+     (sql . t)
      ))
 #+END_SRC
 ** ox-hugo
@@ -485,6 +520,24 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
 (use-package htmlize)
 
 #+END_SRC
+** org-ref
+  [[https://www.youtube.com/watch?v=2t925KRBbFc][Youtube intro]]
+
+  #+begin_src emacs-lisp
+    (use-package org-ref
+      :config
+      (setq org-ref-completion-library 'org-ref-helm-cite
+            org-ref-get-pdf-filename-function 'org-ref-get-pdf-filename-helm-bibtex
+            org-ref-default-bibliography bib-files-directory
+            org-ref-notes-directory org-directory
+            org-ref-notes-function 'orb-edit-notes))
+  #+end_src
+** ox-reveal
+#+begin_src emacs-lisp
+      (use-package ox-reveal
+        :config
+        (setq Org-Reveal-tetle-slide nil))
+#+end_src
 * Knowledge Management
 - A [[https://www.youtube.com/watch?v=EjQRqd_3AnA][good example]].
 - [[https://www.orgroam.com/manual.html#Introduction][Org-roam documentation]]
@@ -561,7 +614,6 @@ or review your notes on a pdf.
       (org-roam-setup)
       )
 #+END_SRC
-
 *** Usage
     [[https://lucidmanager.org/productivity/taking-notes-with-emacs-org-mode-and-org-roam/][intro]]
     With org-roam completion you can link notes just by typing some of the initial words of it
@@ -575,6 +627,16 @@ or review your notes on a pdf.
 
     With the Roam buffer you can see the backlinks to that node while visiting it,
     show the buffer using (C-c n l).
+** org-bibitex
+   #+begin_src emacs-lisp
+       (use-package org-roam-bibtex
+         :after (org-roam helm-bibtex)
+         :bind (:map org-mode-map ("C-c n b" . orb-note-actions))
+         :config
+         (require 'org-ref))
+         (org-roam-bibtex-mode)
+     
+   #+end_src
 ** latex
    Cdlatex provides [[https://orgmode.org/manual/CDLaTeX-mode.html#CDLaTeX-mode][some expansions]], that can be used inside org-mode
    (when on org mode you enable via M-x org-cdlatex-mode)
@@ -583,7 +645,12 @@ or review your notes on a pdf.
      (use-package tex
        :ensure auctex
        :ensure cdlatex)
+     (setq org-latex-pdf-process (list "latexmk -shell-escape -bibtex -f -pdf %f"))
+     
    #+end_src
+** BibTex
+   [[https://lucidmanager.org/productivity/emacs-bibtex-mode/][Manage your literature with Emacs BibTex Mode]]
+   
 * Languages Specific Modes and Support
 ** all
 #+NAME: all-languages
@@ -731,6 +798,8 @@ article and his python configuration is very comprehensive
     )
 
 #+END_SRC
+** lilypond
+   [[https://lilypond.org/doc/v2.23/Documentation/usage/text-editor-support.html][Lilypond on emacs]] needs some elisp files found on it's source code
 
 * Expendable
 #+BEGIN_SRC emacs-lisp
@@ -760,7 +829,7 @@ Trying to keep keybindings in one place
 
 #+NAME: keybidings
 #+BEGIN_SRC emacs-lisp
-
+  (put 'upcase-region 'disabled nil) ; C-x C-u I don't have a capslock key
   (use-package general
     :config
     (general-define-key
@@ -774,11 +843,14 @@ Trying to keep keybindings in one place
      "M-g g" 'avy-goto-line
      "M-g M-g" 'avy-goto-line
      "C-c a" 'org-agenda
+     "C-c b" 'helm-bibtex-with-local-bibliography
      "C-c c" 'org-capture
      "C-c e" 'config-visit
      "C-c l" 'org-store-link
      "C-c r" 'config-reload
      "C-." 'er/expand-region
+     "C-c w" 'flyspell-word
+     "C-c f" 'flyspell-buffer
      ;; "C-," 'mc/mark-next-like-this
      "C-=" 'mc/mark-next-like-this
      "C-a" 'back-to-indentation
@@ -796,7 +868,7 @@ Trying to keep keybindings in one place
     (general-create-definer bassavox/leader-key :prefix "C-!")
     (bassavox/leader-key
       "t" '(:ignore t :which-key "Text")))
-
+  
   (use-package hydra)
   (defhydra hydra-text-scale (:timeout 4)
     "text zoom"
