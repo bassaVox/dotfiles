@@ -21,12 +21,14 @@
 
    #+BEGIN_SRC emacs-lisp
      (setq package-enable-at-startup nil
-           package-archives '(("elpa" . "https://elpa.gnu.org/packages/")
+           package-archives '(("nongnu" . "https://elpa.nongnu.org/nongnu/")
+                              ("elpa" . "https://elpa.gnu.org/packages/")
                               ("melpa" . "https://melpa.org/packages/")
                               ("melpa-stable" . "https://stable.melpa.org/packages/")
-                              ("org" . "https://orgmode.org/elpa/")))
+                              ("org" . "https://orgmode.org/elpa/")
+                              ))
 
-     (package-initialize)
+     ;; (package-initialize)
      (unless package-archive-contents
        (package-refresh-contents))
    #+END_SRC   
@@ -201,12 +203,12 @@
      (setq bibtex-user-optional-fields '(("keywords" "Keywords to describe the entry" "")
                                          ("file" "Link to document file." ":"))
            bibtex-align-at-equal-sign t)
-     
+
      (setq bib-files-directory (directory-files
                                 (concat (getenv "HOME") "/git/org/bibliography/") t
                                 "^[A-Z|a-z].+.bib$")
            pdf-files-directory (concat (getenv "HOME") "/Dropbox/pdf/"))
-     
+
    #+end_src
 
     
@@ -254,6 +256,7 @@
    #+BEGIN_SRC emacs-lisp
      (use-package lsp-mode
        :commands lsp
+       :ensure t
        :hook
        ((scala-mode . lsp)
         (python-mode . lsp)
@@ -272,15 +275,15 @@
              lsp-enable-indentation t)
        :bind-keymap
        ("C-?" . lsp-command-map)
-
+     
        )
-
-
+     
+     
      ;; lisp-ui adds inline UI element
      (use-package lsp-ui
        :after lsp-mode
        :hook (lsp-mode-hook . lsp-ui-mode))
-
+     
      (use-package company-lsp
        :after '(company lsp-mode)
        :config
@@ -288,7 +291,7 @@
              company-lsp-async t
              company-lsp-enable-snippet t)
        (push 'company-lsp company-backends))
-
+     
      (use-package company-box
        :hook (company-mode . company-box-mode))
      (use-package dap-mode
@@ -296,8 +299,8 @@
        (dap-mode 1)
        (dap-ui-mode 1)
        (require 'dap-python))
-
-
+     
+     
    #+END_SRC
 ** flycheck
 #+NAME: flyckeck
@@ -328,6 +331,8 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
    (yas-reload-all)
    (add-hook 'vue-mode #'yas-minor-mode)
    (add-hook 'web-mode #'yas-minor-mode)
+   (add-hook 'python-mode #'yas-minor-mode)
+   (add-hook 'rust-mode #'yas-minor-mode)
    )
 
   (use-package yasnippet-snippets
@@ -401,7 +406,7 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
    #+end_src
 * Org Mode Related
   Generally I go to [[http://doc.norang.ca/org-mode.html][a good workflow explanation]] to get ideas on using org mode.
-
+** general org-mode config
 #+BEGIN_SRC emacs-lisp
   (use-package org
     :config
@@ -469,7 +474,7 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
 #+END_SRC
 ** org-babel
 #+BEGIN_SRC emacs-lisp
-(use-package ein)
+; (use-package ein)
 
 
 #+END_SRC
@@ -478,7 +483,7 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
    'org-babel-load-languages
    '(
      (python . t)
-     (ein . t)
+     ; (ein . t)
      (ipython . t)
      (shell . t)
      (latex . t)
@@ -486,6 +491,7 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
      (R . t)
      (lilypond . t)
      (sql . t)
+     (mermaid . t)
      ))
 #+END_SRC
 ** ox-hugo
@@ -536,7 +542,7 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
 #+begin_src emacs-lisp
       (use-package ox-reveal
         :config
-        (setq Org-Reveal-tetle-slide nil))
+        (setq Org-Reveal-title-slide t))
 #+end_src
 * Knowledge Management
 - A [[https://www.youtube.com/watch?v=EjQRqd_3AnA][good example]].
@@ -629,13 +635,13 @@ or review your notes on a pdf.
     show the buffer using (C-c n l).
 ** org-bibitex
    #+begin_src emacs-lisp
-       (use-package org-roam-bibtex
-         :after (org-roam helm-bibtex)
-         :bind (:map org-mode-map ("C-c n b" . orb-note-actions))
-         :config
-         (require 'org-ref))
-         (org-roam-bibtex-mode)
-     
+     (use-package org-roam-bibtex
+       :after (org-roam helm-bibtex)
+       :bind (:map org-mode-map ("C-c n b" . orb-note-actions))
+       :config
+       (require 'org-ref))
+     ;;   (org-roam-bibtex-mode)		
+
    #+end_src
 ** latex
    Cdlatex provides [[https://orgmode.org/manual/CDLaTeX-mode.html#CDLaTeX-mode][some expansions]], that can be used inside org-mode
@@ -650,7 +656,17 @@ or review your notes on a pdf.
    #+end_src
 ** BibTex
    [[https://lucidmanager.org/productivity/emacs-bibtex-mode/][Manage your literature with Emacs BibTex Mode]]
-   
+* Presentations, Graphs
+** mermaide mode
+It too defines a  org-babel-execute:mermaid function, so i put it before ob-mermaid
+#+begin_src emacs-lisp
+  ;;(use-package mermaid-mode)
+#+end_src
+** ob-mermaid
+#+begin_src emacs-lisp
+  (use-package ob-mermaid)
+
+#+end_src
 * Languages Specific Modes and Support
 ** all
 #+NAME: all-languages
