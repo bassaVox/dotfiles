@@ -272,18 +272,31 @@
              lsp-eldoc-render-all t
              lsp-enable-completion-at-point t
              lsp-enable-xref t
-             lsp-enable-indentation t)
+             lsp-enable-indentation t
+             lsp-rust-analyzer-cargo-watch-command "clippy"
+             lsp-rust-analyzer-server-display-inlay-hints t
+             lsp-rust-analyzer-display-lifetime-elision-hints-enable "skip_trivial"
+             lsp-rust-analyzer-display-chaining-hints t
+             lsp-rust-analyzer-display-lifetime-elision-hints-use-parameter-names nil
+             lsp-rust-analyzer-display-closure-return-type-hints t
+             lsp-rust-analyzer-display-parameter-hints nil
+             lsp-rust-analyzer-display-reborrow-hints nil
+
+             )
        :bind-keymap
        ("C-?" . lsp-command-map)
-     
        )
-     
-     
+
      ;; lisp-ui adds inline UI element
      (use-package lsp-ui
        :after lsp-mode
+       :custom
+       (lsp-ui-peek-always-show t)
+       (lsp-ui-sideline-show-hover t)
+       (lsp-ui-doc-enable nil)
+       (lsp-ui-doc-position "botton")
        :hook (lsp-mode-hook . lsp-ui-mode))
-     
+
      (use-package company-lsp
        :after '(company lsp-mode)
        :config
@@ -291,16 +304,21 @@
              company-lsp-async t
              company-lsp-enable-snippet t)
        (push 'company-lsp company-backends))
-     
+
      (use-package company-box
-       :hook (company-mode . company-box-mode))
+       :custom
+       (company-idle-delay 0.5)
+       :hook (company-mode . company-box-mode)
+
+
+       )
      (use-package dap-mode
        :config
        (dap-mode 1)
        (dap-ui-mode 1)
        (require 'dap-python))
-     
-     
+
+
    #+END_SRC
 ** flycheck
 #+NAME: flyckeck
@@ -325,18 +343,20 @@
 Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnippet_via_usepackage/][reddit]] user
 #+NAME: yasnippet
 #+BEGIN_SRC emacs-lisp
-  (use-package yasnippet
-    :ensure t
-    :config
-   (yas-reload-all)
-   (add-hook 'vue-mode #'yas-minor-mode)
-   (add-hook 'web-mode #'yas-minor-mode)
-   (add-hook 'python-mode #'yas-minor-mode)
-   (add-hook 'rust-mode #'yas-minor-mode)
-   )
+   (use-package yasnippet
+     :ensure t
+     :config
+    (yas-reload-all)
+    ;; (add-hook 'vue-mode #'yas-minor-mode)
+    ;; (add-hook 'web-mode #'yas-minor-mode)
+    ;; (add-hook 'python-mode #'yas-minor-mode)
+    ;; (add-hook 'rust-mode #'yas-minor-mode)
+    (add-hook 'prog-mode-hook 'yas-minor-mode)
+    (add-hook 'text-mode-hook 'yas-minor-mode)
+    )
 
-  (use-package yasnippet-snippets
-    :ensure t)
+   (use-package yasnippet-snippets
+     :ensure t)
 #+END_SRC
 ** avy
    Allows you to navegate by character seen on any visible portion of
@@ -415,7 +435,7 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
     (setq org-todo-keywords
           '((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")
           (sequence "BACKLOG(b)" "READY(r)" "ACTIVE(a)" "|" "COMPLETED(c)" "CANC(k)" )))
-    (setq org-attach-id-dir '("~/Dropbox/org-attachments"))
+    (setq org-attach-id-dir (concat (getenv "HOME") "/Dropbox/org-attachments"))
     (setq org-directory (concat (getenv "HOME") "/git/org"))
   (setq org-agenda-custom-commands
         '(
@@ -640,7 +660,7 @@ or review your notes on a pdf.
        :bind (:map org-mode-map ("C-c n b" . orb-note-actions))
        :config
        (require 'org-ref))
-     ;;   (org-roam-bibtex-mode)		
+        (org-roam-bibtex-mode)		
 
    #+end_src
 ** latex
@@ -655,7 +675,7 @@ or review your notes on a pdf.
      
    #+end_src
 ** BibTex
-   [[https://lucidmanager.org/productivity/emacs-bibtex-mode/][Manage your literature with Emacs BibTex Mode]]
+[[https://lucidmanager.org/productivity/emacs-bibtex-mode/][Manage your literature with Emacs BibTex Mode]]
 * Presentations, Graphs
 ** mermaide mode
 It too defines a  org-babel-execute:mermaid function, so i put it before ob-mermaid
@@ -676,6 +696,9 @@ It too defines a  org-babel-execute:mermaid function, so i put it before ob-merm
 ** rust
    See https://www.reddit.com/r/rust/comments/a3da5g/my_entire_emacs_config_for_rust_in_fewer_than_20/
 
+
+   Another good config: [[https://robert.kra.hn/posts/rust-emacs-setup/][Robert Krahn's]]
+   
 #+NAME: rust-mode
 #+BEGIN_SRC emacs-lisp
      (use-package toml-mode)
@@ -690,6 +713,31 @@ It too defines a  org-babel-execute:mermaid function, so i put it before ob-merm
      (use-package flycheck-rust
        :config (add-hook 'flycheck-mode-hook #'flycheck-rust-setup))
 #+END_SRC
+*** rustic
+#+NAME: rustic
+#+begin_src emacs-lisp
+  (use-package rustic
+    :ensure
+    :config
+    ;; uncomment for less flashiness
+    ;; (setq lsp-eldoc-hook nil)
+    ;; (setq lsp-enable-symbol-highlighting nil)
+    ;; (setq lsp-signature-auto-activate nil)
+
+    ;; comment to disable rustfmt on save
+    (setq rustic-format-on-save t)
+    (add-hook 'rustic-mode-hook 'bassavox/rustic-mode-hook))
+
+
+  (defun bassavox/rustic-mode-hook ()
+    ;; so that run C-c C-c C-r works without having to confirm, but don't try to
+    ;; save rust buffers that are not file visiting. Once
+    ;; https://github.com/brotzeit/rustic/issues/253 has been resolved this should
+    ;; no longer be necessary.
+    (when buffer-file-name
+      (setq-local buffer-save-without-query t)))
+#+end_src
+
 ** python
 Elpy configuration extracted from this [[https://medium.com/analytics-vidhya/managing-a-python-development-environment-in-emacs-43897fd48c6a][medium article]], this is a nice
 article and his python configuration is very comprehensive
@@ -813,6 +861,8 @@ article and his python configuration is very comprehensive
     :ensure t
     )
 
+  (use-package inf-clojure)
+
 #+END_SRC
 ** lilypond
    [[https://lilypond.org/doc/v2.23/Documentation/usage/text-editor-support.html][Lilypond on emacs]] needs some elisp files found on it's source code
@@ -840,6 +890,16 @@ Reloading this configuration file
     (interactive)
     (org-babel-load-file (expand-file-name "~/.emacs.d/config.org")))
 #+END_SRC
+
+The [[https://github.com/bbatsov/crux][Crux]] package has some usefull functions but I'm using a simpler one:
+#+begin_src emacs-lisp
+  (defun bassavox/open-line-above ()
+    (interactive)
+    (move-beginning-of-line nil)
+    (newline-and-indent)
+    (forward-line -1)
+    (indent-according-to-mode))
+#+end_src
 * General Keybindings
 Trying to keep keybindings in one place
 
@@ -877,6 +937,8 @@ Trying to keep keybindings in one place
      "C-f" 'isearch-forward
      "C-s" 'forward-char
      "C-t" 'backward-char
+     "M-m" 'lsp-ui-imenu
+     "M-o" 'bassavox/open-line-above
      )
     (general-define-key
      :keymaps 'isearch-mode-map
@@ -884,7 +946,7 @@ Trying to keep keybindings in one place
     (general-create-definer bassavox/leader-key :prefix "C-!")
     (bassavox/leader-key
       "t" '(:ignore t :which-key "Text")))
-  
+
   (use-package hydra)
   (defhydra hydra-text-scale (:timeout 4)
     "text zoom"
