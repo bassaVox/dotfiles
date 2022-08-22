@@ -422,6 +422,7 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
                  :config
                  (setq ispell-program-name "hunspell"
                        ispell-dictionary "pt_BR")
+                 (define-key flyspell-mode-map (kbd "C-M-i") nil)
                  :hook (text-mode . flyspell-mode))
    #+end_src
 * Org Mode Related
@@ -569,15 +570,6 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
 - [[https://www.orgroam.com/manual.html#Introduction][Org-roam documentation]]
 - [[https://youtu.be/Wy9WvF5gWYg][org roam and bibitex]]
   
-** pdf-tools
-   There are some [[https://github.com/politza/pdf-tools][dependencies]] to pdf-tools. After installing it you can, for example,
-render a pdf in 'midnight mode' which, by itself, justifies you installing it.
-(M-x pdf-tools-help RET) will help.
-
-TODO: For some reason, when visiting a PDF file via org-noter, running M-x pdf-tools-install
-was required for pdf-tools to load. 
-#+BEGIN_SRC emacs-lisp
-(use-package pdf-tools)
 
 #+END_SRC
 ** org-noter
@@ -676,6 +668,22 @@ or review your notes on a pdf.
    #+end_src
 ** BibTex
 [[https://lucidmanager.org/productivity/emacs-bibtex-mode/][Manage your literature with Emacs BibTex Mode]]
+
+#+begin_src emacs-lisp
+(setq bibtex-dialect 'biblatex)
+  
+#+end_src
+** pdf-tools
+   There are some [[https://github.com/politza/pdf-tools][dependencies]] to pdf-tools. After installing it you can, for example,
+render a pdf in 'midnight mode' which, by itself, justifies you installing it.
+(M-x pdf-tools-help RET) will help.
+
+TODO: For some reason, when visiting a PDF file via org-noter, running M-x pdf-tools-install
+was required for pdf-tools to load. 
+#+BEGIN_SRC emacs-lisp
+(use-package pdf-tools)
+
+
 * Presentations, Graphs
 ** mermaide mode
 It too defines a  org-babel-execute:mermaid function, so i put it before ob-mermaid
@@ -939,6 +947,10 @@ Trying to keep keybindings in one place
      "C-t" 'backward-char
      "M-m" 'lsp-ui-imenu
      "M-o" 'bassavox/open-line-above
+     "C-S-s" 'forward-word
+     "C-S-t" 'backward-word
+     "C-S-n" 'org-forward-paragraph
+     "C-S-p" 'org-backward-paragraph
      )
     (general-define-key
      :keymaps 'isearch-mode-map
