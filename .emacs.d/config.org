@@ -1009,27 +1009,38 @@ Trying to keep keybindings in one place
      "C-c e" 'config-visit
      "C-c l" 'org-store-link
      "C-c r" 'config-reload
-     "C-." 'er/expand-region
+     ;; "C-." 'er/expand-region       
      "C-c w" 'flyspell-word
      "C-c f" 'flyspell-buffer
      ;; "C-," 'mc/mark-next-like-this
      "C-=" 'mc/mark-next-like-this
      "C-a" 'back-to-indentation
+     "M-a" 'backward-sentence
+     "M-e" 'forward-sentence
+     "C-M-a" 'beginnig-of-defun
+     "C-M-e" 'end-of-defun
      "M-<backspace>" 'delete-indentation ; C-<backspace> kills back word
      ;; changing keybidings due to my new layout "DonTyQ"
      ;; https://configure.zsa.io/ergodox-ez/layouts/RlEeW/latest/0
      "C-b" 'transpose-chars
      "C-f" 'isearch-forward
+     "C-S-f" 'isearch-forward-regexp
      "C-s" 'forward-char
      "C-t" 'backward-char
-     "M-m" 'lsp-ui-imenu
-     "M-o" 'bassavox/open-line-above
      "C-S-s" 'forward-word
      "C-S-t" 'backward-word
+     "C-}" 'forward-sexp
+     "C-{" 'backward-sexp
+     "C-(" 'down-list
+     "C-)" 'backward-up-list
      "C-S-n" 'forward-paragraph
      "C-S-p" 'backward-paragraph
-     "C-(" 'previous-buffer
-     "C-)" 'next-buffer
+     ;"M-m" 'lsp-ui-imenu
+     "M-o" 'bassavox/open-line-above
+
+
+     "C-<prior>" 'previous-buffer
+     "C-<next>" 'next-buffer
      )
     (general-define-key
      :keymaps 'isearch-mode-map
