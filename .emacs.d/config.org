@@ -1027,8 +1027,8 @@ Trying to keep keybindings in one place
      "C-S-f" 'isearch-forward-regexp
      "C-s" 'forward-char
      "C-t" 'backward-char
-     "C-S-s" 'forward-word
-     "C-S-t" 'backward-word
+     "C-S-s" 'forward-sexp
+     "C-S-t" 'backward-sexp
      "C-}" 'forward-sexp
      "C-{" 'backward-sexp
      "C-(" 'down-list
