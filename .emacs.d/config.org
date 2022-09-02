@@ -960,33 +960,7 @@ article and his python configuration is very comprehensive
   (use-package command-log-mode)
 
 #+END_SRC
-* Custom Functions
-Loading this configuration file (binding are defined later):
-#+BEGIN_SRC emacs-lisp
-  (defun config-visit ()
-    (interactive)
-    (find-file "~/.emacs.d/config.org"))
-#+END_SRC
-
-Reloading this configuration file
-#+BEGIN_SRC emacs-lisp
-  (defun config-reload ()
-    (interactive)
-    (org-babel-load-file (expand-file-name "~/.emacs.d/config.org")))
-#+END_SRC
-
-The [[https://github.com/bbatsov/crux][Crux]] package has some usefull functions but I'm using a simpler one:
-#+begin_src emacs-lisp
-  (defun bassavox/open-line-above ()
-    (interactive)
-    (move-beginning-of-line nil)
-    (newline-and-indent)
-    (forward-line -1)
-    (indent-according-to-mode))
-#+end_src
 * General Keybindings
-Trying to keep keybindings in one place
-
 #+NAME: keybidings
 #+BEGIN_SRC emacs-lisp
   ;; shift arrows to move to window x
@@ -1017,7 +991,7 @@ Trying to keep keybindings in one place
      "C-a" 'back-to-indentation
      "M-a" 'backward-sentence
      "M-e" 'forward-sentence
-     "C-M-a" 'beginnig-of-defun
+     "C-M-a" 'beginning-of-defun
      "C-M-e" 'end-of-defun
      "M-<backspace>" 'delete-indentation ; C-<backspace> kills back word
      ;; changing keybidings due to my new layout "DonTyQ"
@@ -1031,14 +1005,13 @@ Trying to keep keybindings in one place
      "C-S-t" 'backward-sexp
      "C-}" 'forward-sexp
      "C-{" 'backward-sexp
-     "C-(" 'down-list
-     "C-)" 'backward-up-list
+     "M-m" 'mark-sexp
+     "C-M-s" 'down-list
+     "C-M-t" 'backward-up-list
      "C-S-n" 'forward-paragraph
      "C-S-p" 'backward-paragraph
      ;"M-m" 'lsp-ui-imenu
      "M-o" 'bassavox/open-line-above
-
-
      "C-<prior>" 'previous-buffer
      "C-<next>" 'next-buffer
      )
@@ -1064,6 +1037,8 @@ Trying to keep keybindings in one place
     "o" '(hydra-global-org/body :which-key "org-global"))
 
 #+END_SRC
+
+Trying to keep keybindings in one place
 * Dead keys in emacs
   On my ergodox I have dead keys "~" and "^" but also, the respective non dead keys
   counterparts, so I can use keybinds like M-^ (org-delete-identation) and type
@@ -1074,6 +1049,30 @@ Trying to keep keybindings in one place
 (require 'iso-transl)
 
 #+END_SRC
+* Custom Functions
+Loading this configuration file (binding are defined later):
+#+BEGIN_SRC emacs-lisp
+  (defun config-visit ()
+    (interactive)
+    (find-file "~/.emacs.d/config.org"))
+#+END_SRC
+
+Reloading this configuration file
+#+BEGIN_SRC emacs-lisp
+  (defun config-reload ()
+    (interactive)
+    (org-babel-load-file (expand-file-name "~/.emacs.d/config.org")))
+#+END_SRC
+
+The [[https://github.com/bbatsov/crux][Crux]] package has some usefull functions but I'm using a simpler one:
+#+begin_src emacs-lisp
+  (defun bassavox/open-line-above ()
+    (interactive)
+    (move-beginning-of-line nil)
+    (newline-and-indent)
+    (forward-line -1)
+    (indent-according-to-mode))
+#+end_src
 * Next Steps
   Here goes the list of packages I want to try out someday:
 ** Forge
