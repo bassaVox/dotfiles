@@ -424,25 +424,6 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
 )
 
 #+END_SRC
-** expand region
-   That feature of selecting text by expanding semantically significant portions may have
-   come from IntelliJ
-   #+BEGIN_SRC emacs-lisp
-     (use-package expand-region
-       :ensure t)
-   #+END_SRC
-** multiple cursors
-
-   That is one of the things you will see usefullness only if you practice...
-
-   #+BEGIN_SRC emacs-lisp
-     ;;installing it's dependency
-     (use-package cl-lib
-       :ensure t)
-     (use-package multiple-cursors
-       :ensure t)
-
-   #+END_SRC
 ** dumb-jump
    I've build from source ripgrep (written in rust) beforehand, which this package
    can use to jump to definition
@@ -986,31 +967,50 @@ article and his python configuration is very comprehensive
      ;; "C-." 'er/expand-region       
      "C-c w" 'flyspell-word
      "C-c f" 'flyspell-buffer
-     ;; "C-," 'mc/mark-next-like-this
-     "C-=" 'mc/mark-next-like-this
      "C-a" 'back-to-indentation
-     "M-a" 'backward-sentence
-     "M-e" 'forward-sentence
+     "C-S-a" 'backward-sentence
+     "C-S-e" 'forward-sentence
      "C-M-a" 'beginning-of-defun
      "C-M-e" 'end-of-defun
+     ;; killing
      "M-<backspace>" 'delete-indentation ; C-<backspace> kills back word
+     "C-<backspace>" 'backward-kill-word ; default
+     "C-S-<backspace>" 'kill-whole-line  ; default
+     "M-DEL" 'kill-word
+     "M-d" 'kill-word                    ; default
+     "M-D" 'kill-sexp
+     "C-d" 'delete-char                  ; default
+     "C-D" 'kill-sexp
+     "C-M-<backspace>" 'backward-kill-sexp ; default
      ;; changing keybidings due to my new layout "DonTyQ"
      ;; https://configure.zsa.io/ergodox-ez/layouts/RlEeW/latest/0
-     "C-b" 'transpose-chars
+     ;; "C-b" 'transpose-chars ; never really used transpose chars
      "C-f" 'isearch-forward
      "C-S-f" 'isearch-forward-regexp
      "C-s" 'forward-char
      "C-t" 'backward-char
+
+     ;; s-exp movements
      "C-S-s" 'forward-sexp
      "C-S-t" 'backward-sexp
-     "C-}" 'forward-sexp
-     "C-{" 'backward-sexp
-     "M-m" 'mark-sexp
-     "C-M-s" 'down-list
-     "C-M-t" 'backward-up-list
-     "C-S-n" 'forward-paragraph
-     "C-S-p" 'backward-paragraph
-     ;"M-m" 'lsp-ui-imenu
+     "C-M-n" 'forward-list                ; default
+     "C-M-p" 'backward-list               ; default
+     "C-S-n" 'down-list
+     "C-S-p" 'backward-up-list
+     ;; marking
+     ;;"C-m" 'mark-word ;; rebiding C-m is not so easy because Enter points to it
+     ;;"C-S-m" 'mark-sexp
+
+     ;; transposing
+     "M-s" 'transpose-words
+     "M-t" 'bassavox/transpose-words-backward
+     "M-n" 'bassavox/move-line-downward
+     "M-p" 'bassavox/move-line-upward
+     "M-N" 'transpose-sentences
+
+     "M-S" 'transpose-sexps
+     "M-T" 'bassavox/transpose-sexps-backward
+
      "M-o" 'bassavox/open-line-above
      "C-<prior>" 'previous-buffer
      "C-<next>" 'next-buffer
@@ -1050,6 +1050,9 @@ Trying to keep keybindings in one place
 
 #+END_SRC
 * Custom Functions
+:PROPERTIES:
+:ORDERED:  t
+:END:
 Loading this configuration file (binding are defined later):
 #+BEGIN_SRC emacs-lisp
   (defun config-visit ()
@@ -1073,6 +1076,53 @@ The [[https://github.com/bbatsov/crux][Crux]] package has some usefull functions
     (forward-line -1)
     (indent-according-to-mode))
 #+end_src
+
+moving lines from [[https://lists.gnu.org/archive/html/help-gnu-emacs/2020-09/msg00276.html][here]]
+
+#+NAME: move-lines
+#+begin_src emacs-lisp
+  (defun bassavox/move-lines (&optional lines)
+    (interactive "*p")
+    (let ((lin (line-number-at-pos))
+          (col (current-column))
+          (num-lines (or lines 1)) )
+      (beginning-of-line)
+      (let ((line (thing-at-point 'line)))
+        (delete-region (point-at-bol) (point-at-eol))
+        (delete-char 1)
+        (goto-char (point-min))
+        (forward-line (+ lin num-lines -1))
+        (insert line)
+        (forward-line -1)
+        (beginning-of-line)
+        (forward-char col) )))
+
+
+  (defun bassavox/move-line-downward (&optional lines)
+    (interactive "*p")
+    (bassavox/move-lines lines))
+
+  (defun bassavox/move-line-upward (&optional lines)
+    (interactive "*p")
+    (bassavox/move-lines (- lines)))
+#+end_src
+
+#+NAME: transpose-word-backward
+#+begin_src emacs-lisp
+  (defun bassavox/transpose-words-backward (&optional ARG)
+    (interactive "*p")
+    (transpose-words (- ARG)))
+    
+#+end_src
+
+#+NAME: bassavox/transpose-sexps-backward
+#+begin_src emacs-lisp
+  (defun bassavox/transpose-sexps-backward(&optional ARG)
+    (interactive "*p")
+    (transpose-sexps (- ARG)))
+  
+#+end_src
+
 * Next Steps
   Here goes the list of packages I want to try out someday:
 ** Forge
