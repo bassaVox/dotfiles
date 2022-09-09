@@ -450,7 +450,7 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
     ([remap describe-key] . helpful-key))
 #+END_SRC
 ** flyspell
-I need to change its keybidings. They are abtrusive.
+I need to change its keybidings. They are obtrusive.
 
    Requires [[https://github.com/hunspell/hunspell][Hunspell]].
    #+begin_src emacs-lisp
@@ -463,6 +463,87 @@ I need to change its keybidings. They are abtrusive.
        (define-key flyspell-mode-map (kbd "C-.") nil)
        :hook (text-mode . flyspell-mode))
    #+end_src
+** smartparens
+There's some introductory remarks [[https://ebzzry.com/en/emacs-pairs/][here]] and an example of
+using it with hydra [[https://github-wiki-see.page/m/abo-abo/hydra/wiki/Smartparenshere][here]], which seems outdated.
+
+#+NAME: hydra-startparens
+#+begin_src emacs-lisp
+(defhydra hydra-smartparens (:hint nil)
+  "
+ Moving^^^^                       Slurp & Barf^^   Wrapping^^            Sexp juggling^^^^               Destructive
+------------------------------------------------------------------------------------------------------------------------
+ [_a_] beginning  [_n_] down      [_L_] bw slurp   [_R_]   rewrap        [_-_] split   [_,_] transpose   [_c_] change inner  [_w_] copy
+ [_e_] end        [_N_] bw down   [_B_] bw barf    [_u_]   unwrap        [___ ] splice  [_A_] absorb      [_C_] change outer
+ [_s_] forward    [_p_] up        [_l_] slurp      [_U_]   bw unwrap     [_r_] raise   [_E_] emit        [_k_] kill          [_g_] quit
+ [_t_] backward   [_P_] bw up     [_b_] barf       [_(__{__[_] wrap (){}[]   [_j_] join    [_o_] convolute   [_K_] bw kill       [_q_] quit"
+  ;; Moving
+  ("a" sp-beginning-of-sexp)
+  ("e" sp-end-of-sexp)
+  ("s" sp-forward-sexp)
+  ("t" sp-backward-sexp)
+  ("n" sp-down-sexp)
+  ("N" sp-backward-down-sexp)
+  ("p" sp-up-sexp)
+  ("P" sp-backward-up-sexp)
+  
+  ;; Slurping & barfing
+  ("L" sp-backward-slurp-sexp)
+  ("B" sp-backward-barf-sexp)
+  ("l" sp-forward-slurp-sexp)
+  ("b" sp-forward-barf-sexp)
+  
+  ;; Wrapping
+  ("R" sp-rewrap-sexp)
+  ("u" sp-unwrap-sexp)
+  ("U" sp-backward-unwrap-sexp)
+  ("(" sp-wrap-round)
+  ("{" sp-wrap-curly)
+  ("[" sp-wrap-square)
+  
+  ;; Sexp juggling
+  ("-" sp-split-sexp)
+  ("_" sp-splice-sexp)
+  ("r" sp-raise-sexp)
+  ("j" sp-join-sexp)
+  ("," sp-transpose-sexp)
+  ("A" sp-absorb-sexp)
+  ("E" sp-emit-sexp)
+  ("o" sp-convolute-sexp)
+  
+  ;; Destructive editing
+  ("c" sp-change-inner :exit t)
+  ("C" sp-change-enclosing :exit t)
+  ("k" sp-kill-sexp)
+  ("K" sp-backward-kill-sexp)
+  ("w" sp-copy-sexp)
+
+  ("q" nil)
+  ("g" nil))
+
+#+end_src
+* Emacs batteries included
+** mark & kill ring
+Using C-u c-SPC enables you to cycle through the kill ring using only C-SPC, see [[info:emacs#Mark Ring][emacs#Mark Ring]].
+
+TODO: get used to global end local mark ring, maybe with: 'helm-all-mark-rings C-x c C-c SPC
+#+NAME: mark-repeat
+#+begin_src emacs-lisp
+  (setq set-mark-command-repeat-pop  t)
+#+end_src
+** eletric pair mode
+See [[info:emacs#Matching][emacs#Matching]]
+
+#+NAME eletric-pair-mode
+#+begin_src emacs-lisp
+  (electric-pair-mode 1)
+#+end_src
+** shift selection
+I don't see much use in [[info:emacs#Shift Selection][emacs#Shift Selection]]
+#+NAME shift-selection-disabling
+#+begin_src emacs-lisp
+  (setq shift-select-mode nil)
+#+end_src
 * Org Mode Related
   Generally I go to [[http://doc.norang.ca/org-mode.html][a good workflow explanation]] to get ideas on using org mode.
 ** general org-mode config
@@ -980,7 +1061,7 @@ article and his python configuration is very comprehensive
      "M-d" 'kill-word                    ; default
      "M-D" 'kill-sexp
      "C-d" 'delete-char                  ; default
-     "C-D" 'kill-sexp
+     "C-S-d" 'kill-sexp
      "C-M-<backspace>" 'backward-kill-sexp ; default
      ;; changing keybidings due to my new layout "DonTyQ"
      ;; https://configure.zsa.io/ergodox-ez/layouts/RlEeW/latest/0
@@ -1018,7 +1099,8 @@ article and his python configuration is very comprehensive
     (general-define-key
      :keymaps 'isearch-mode-map
      "C-t" 'isearch-repeat-backward)
-    (general-create-definer bassavox/leader-key :prefix "C-!")
+    ;; (general-create-definer bassavox/leader-key :prefix "C-!")
+    (general-create-definer bassavox/leader-key :prefix "C-ç")
     (bassavox/leader-key
       "t" '(:ignore t :which-key "Text")))
 
@@ -1035,6 +1117,8 @@ article and his python configuration is very comprehensive
     "p" '(hydra-projectile/body :which-key "projectile"))
   (bassavox/leader-key
     "o" '(hydra-global-org/body :which-key "org-global"))
+  (bassavox/leader-key
+    "s" '(hydra-smartparens/body :which-key "org-global"))
 
 #+END_SRC
 
@@ -1138,4 +1222,3 @@ moving lines from [[https://lists.gnu.org/archive/html/help-gnu-emacs/2020-09/ms
 ** better search keybindings
    [[https://www.emacswiki.org/emacs/IncrementalSearch][See emacs wiki]]
 ** better resizing windows, like text resizing
-
