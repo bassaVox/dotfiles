@@ -146,6 +146,9 @@
     
     #+END_SRC
 
+*** prettify
+You can enable displaying unicode versions of math operators (e.g. LaTeX) or other symbols
+(like rust's -> return type signature) using **prettify-symbols-mode**
 * Terminal
 #+BEGIN_SRC emacs-lisp
   (defvar my-term-shell "/bin/bash")
@@ -522,9 +525,28 @@ using it with hydra [[https://github-wiki-see.page/m/abo-abo/hydra/wiki/Smartpar
   ("g" nil))
 
 #+end_src
+** popper
+[[https://karthinks.com/software/dealing-with-window-clutter-in-emacs/][Stumbled upon]] the popper's author blog. It seems a sane way to manage window to a fro.
+#+begin_src emacs-lisp
+  (use-package popper
+    :ensure t ; or :straight t
+  
+    :init
+    (setq popper-reference-buffers
+          '("\\*Messages\\*"
+            "Output\\*$"
+            "\\*Async Shell Command\\*"
+            help-mode
+            compilation-mode))
+    (popper-mode +1)
+    (popper-echo-mode +1))
+  (setq popper-group-function #'popper-group-by-directory)
+#+end_src
+
 * Emacs batteries included
 ** mark & kill ring
 Using C-u c-SPC enables you to cycle through the kill ring using only C-SPC, see [[info:emacs#Mark Ring][emacs#Mark Ring]].
+[[https://www.masteringemacs.org/article/fixing-mark-commands-transient-mark-mode][Some]] prefer to change the behavior of the mark system in respect to the active transient-mark-mode
 
 TODO: get used to global end local mark ring, maybe with: 'helm-all-mark-rings C-x c C-c SPC
 #+NAME: mark-repeat
@@ -545,7 +567,7 @@ I don't see much use in [[info:emacs#Shift Selection][emacs#Shift Selection]]
   (setq shift-select-mode nil)
 #+end_src
 * Org Mode Related
-  Generally I go to [[http://doc.norang.ca/org-mode.html][a good workflow explanation]] to get ideas on using org mode.
+Generally I go to [[http://doc.norang.ca/org-mode.html][a good workflow explanation]] to get ideas on using org mode.
 ** general org-mode config
 #+BEGIN_SRC emacs-lisp
   (use-package org
@@ -618,17 +640,19 @@ A hydra for org inspired by [[https://github.com/abo-abo/hydra/wiki/orgmode][thi
 
 #+NAME:hydra-global-org
 #+begin_src emacs-lisp
-(defhydra hydra-global-org (:color blue)
-  "Org"
-  ("t" org-timer-start "Start Timer")
-  ("s" org-timer-stop "Stop Timer")
-  ("r" org-timer-set-timer "Set Timer") ; This one requires you be in an orgmode doc, as it sets the timer for the header
-  ("p" org-timer "Print Timer") ; output timer value to buffer
-  ("w" (org-clock-in '(4)) "Clock-In") ; used with (org-clock-persistence-insinuate) (setq org-clock-persist t)
-  ("o" org-clock-out "Clock-Out") ; you might also want (setq org-log-note-clock-out t)
-  ("j" org-clock-goto "Clock Goto") ; global visit the clocked task
-  ("c" org-capture "Capture") ; Don't forget to define the captures you want http://orgmode.org/manual/Capture.html
-  ("l" org-capture-goto-last-stored "Last Capture"))
+  (defhydra hydra-global-org (:color blue)
+    "Org"
+    ("c" org-capture "Capture") ; Don't forget to define the captures you want http://orgmode.org/manual/Capture.html
+    ("i" org-clock-in  "Clock-In") ; used with (org-clock-persistence-insinuate) (setq org-clock-persist t)
+    ("o" org-clock-out "Clock-Out") ; you might also want (setq org-log-note-clock-out t)
+    ("e" org-clock-goto "Clock Goto") ; global visit the clocked task
+    ("u" outline-up-heading "Up heading")
+    ("n" org-next-visible-heading "Next Heading" :color red)
+    ("t" org-backward-heading-same-level "Backward =Level" :color red)
+    ("s" org-forward-heading-same-level "Forward =Level":color red)
+    ("p" org-previous-visible-heading "Previous Heading" :color red)
+    ("b" org-insert-structure-template "Insert Block")
+    )
 
 #+end_src
 ** org-babel
@@ -686,7 +710,7 @@ A hydra for org inspired by [[https://github.com/abo-abo/hydra/wiki/orgmode][thi
 
 #+END_SRC
 ** org-ref
-  [[https://www.youtube.com/watch?v=2t925KRBbFc][Youtube intro]]
+  [[https://www.youtube.com/watch?v=2t925KRBbFc][Youtube intro]] (old), [[https://youtu.be/3u6eTSzHT6s][Youtube intro (new)]]
 
   #+begin_src emacs-lisp
     (use-package org-ref
@@ -696,6 +720,7 @@ A hydra for org inspired by [[https://github.com/abo-abo/hydra/wiki/orgmode][thi
             org-ref-default-bibliography bib-files-directory
             org-ref-notes-directory org-directory
             org-ref-notes-function 'orb-edit-notes))
+    (require 'org-ref-helm)
   #+end_src
 ** ox-reveal
 #+begin_src emacs-lisp
@@ -708,7 +733,6 @@ A hydra for org inspired by [[https://github.com/abo-abo/hydra/wiki/orgmode][thi
 - [[https://www.orgroam.com/manual.html#Introduction][Org-roam documentation]]
 - [[https://youtu.be/Wy9WvF5gWYg][org roam and bibitex]]
   
-
 #+END_SRC
 ** org-noter
 Org noter will open another frame with two windows for you to make annotations, 
@@ -1023,14 +1047,31 @@ article and his python configuration is very comprehensive
 
 #+END_SRC
 * General Keybindings
-#+NAME: keybidings
+** remarks
+To enumerate all keybidings in a buffer you do **C-h m**.
+A [[https://www.masteringemacs.org/article/mastering-key-bindings-emacs][good article]] on mastering emacs keybindings. When repeating commands
+ergonomically, one can chose to create an Hydra (or use magit transient package)
+or enable **repeat-mode** (See [[https://karthinks.com/software/it-bears-repeating/][this]] article). I usually get away resting my thumbs
+over Ctrl, Alt or Shift keys, but this won't work with prefix keys like C-x or M-g
+
+** prefix keys
+- C-x keymap is for global bindings
+- C-c are reserved for users
+- C-ç are used mainly for my hydras
+
+To se get the list of keybidings belonging to those prefix, type them and then **C-h"
+** keybindings
+#+NAME: keybindings
 #+BEGIN_SRC emacs-lisp
+  (repeat-mode) ; calling multiple commands in a keymap without repeating
+  (setq repeat-exit-timeout 5) ; in seconds
   ;; shift arrows to move to window x
   (windmove-default-keybindings) ; I loose shift selection, which I don't mind
   (put 'upcase-region 'disabled nil) ; C-x C-u I don't have a capslock key
   (use-package general
     :config
     (general-define-key
+     "C-." 'repeat
      "M-x" 'helm-M-x
      "C-x g" 'magit-status
      "C-c p" 'projectile-command-map
@@ -1095,6 +1136,11 @@ article and his python configuration is very comprehensive
      "M-o" 'bassavox/open-line-above
      "C-<prior>" 'previous-buffer
      "C-<next>" 'next-buffer
+   
+     ; windows
+     "C-<dead-tilde>"   'popper-toggle-latest
+     "M-<dead-tilde>"   'popper-cycle
+     "C-M-<dead-tilde>" 'popper-toggle-type
      )
     (general-define-key
      :keymaps 'isearch-mode-map
@@ -1118,7 +1164,7 @@ article and his python configuration is very comprehensive
   (bassavox/leader-key
     "o" '(hydra-global-org/body :which-key "org-global"))
   (bassavox/leader-key
-    "s" '(hydra-smartparens/body :which-key "org-global"))
+    "s" '(hydra-smartparens/body :which-key "smartparens"))
 
 #+END_SRC
 
