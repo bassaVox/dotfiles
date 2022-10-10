@@ -58,12 +58,12 @@
       (set-fringe-mode 5)
     #+END_SRC
 **** Theme and modeline
-    Doom-Moonlight, Doom-Gruvbox, Doom-vibrant and Doom-Tomorrownight are amongst
-    my favourites themes!
+    Doom-Moonlight, Doom-Gruvbox, Doom-vibrant and Doom-Tomorrownight,
+    doom-horizon, doom-palenight are amongst my favourites themes!
     #+NAME: theme
     #+BEGIN_SRC emacs-lisp
       (use-package doom-themes
-        :config (load-theme 'doom-vibrant t)
+        :config (load-theme 'doom-palenight t)
         (doom-themes-org-config)
         )
     #+END_SRC 
