@@ -9,7 +9,7 @@
   emacs:
 
   - [[https://www.youtube.com/channel/UCDEtZ7AKmwS0_GNJog01D2g/playlists][renzix]]
-  - [[https://github.com/alhassy/emacs.d][A Life Configuring Emacs]]
+  - [[https://github.com/alhassy/emacs.d][A Life Configuring Emacs]] ->  [[http://alhassy.com/emacs.d/index.html][pretty version]]
   - [[https://www.youtube.com/channel/UCDEtZ7AKmwS0_GNJog01D2g/playlists][Youtube "Uncle Bob" playlist]]
   - [[https://www.youtube.com/watch?v=74zOY-vgkyw&list=PLEoMzSkcN8oPH1au7H6B7bBJ4ZO7BXjSZ&index=1][System Crafter's 'Emacs from Scratch']]
 
