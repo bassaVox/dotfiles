@@ -1,0 +1,753 @@
+#+TITLE: Bassavox Emacps Configuration
+#+AUTHOR: bassavox
+#+DESCRIPTION:
+#+OPTION: toc:2
+#+PROPERTY: header-args :results silent
+#+STARTUP: show2levels
+
+* Package Manager
+** Elpaca
+[[https://github.com/progfolio/elpaca][Copy and pasted from github]]
+
+#+begin_src emacs-lisp
+  (defvar elpaca-installer-version 0.4)
+  (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
+  (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
+  (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
+  (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
+                                :ref nil
+                                :files (:defaults (:exclude "extensions"))
+                                :build (:not elpaca--activate-package)))
+  (let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
+         (build (expand-file-name "elpaca/" elpaca-builds-directory))
+         (order (cdr elpaca-order))
+         (default-directory repo))
+    (add-to-list 'load-path (if (file-exists-p build) build repo))
+    (unless (file-exists-p repo)
+      (make-directory repo t)
+      (when (< emacs-major-version 28) (require 'subr-x))
+      (condition-case-unless-debug err
+          (if-let ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
+                   ((zerop (call-process "git" nil buffer t "clone"
+                                         (plist-get order :repo) repo)))
+                   ((zerop (call-process "git" nil buffer t "checkout"
+                                         (or (plist-get order :ref) "--"))))
+                   (emacs (concat invocation-directory invocation-name))
+                   ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+                                         "--eval" "(byte-recompile-directory \".\" 0 'force)")))
+                   ((require 'elpaca))
+                   ((elpaca-generate-autoloads "elpaca" repo)))
+              (kill-buffer buffer)
+            (error "%s" (with-current-buffer buffer (buffer-string))))
+        ((error) (warn "%s" err) (delete-directory repo 'recursive))))
+    (unless (require 'elpaca-autoloads nil t)
+      (require 'elpaca)
+      (elpaca-generate-autoloads "elpaca" repo)
+      (load "./elpaca-autoloads")))
+  (add-hook 'after-init-hook #'elpaca-process-queues)
+  (elpaca `(,@elpaca-order)) 
+
+
+
+#+end_src
+
+** Elpaca use package support
+
+#+begin_src emacs-lisp
+  ;; Install use-package support
+  (elpaca elpaca-use-package
+    ;; Enable :elpaca use-package keyword.
+    (elpaca-use-package-mode)
+    ;; Assume :elpaca t unless otherwise specified.
+    (setq elpaca-use-package-by-default t))
+
+  ;; Block until current queue processed.
+  (elpaca-wait)
+
+
+  ;; Expands to: (elpaca evil (use-package evil :demand t))
+  ;; (use-package evil :demand t)
+
+
+  ;; Don't install anything. Defer execution of BODY
+  (elpaca nil (message "deferred"))
+
+#+end_src
+
+* Messing with Emacs Defaults
+** General Emacs Behaviour
+#+NAME:emacs-defaults
+#+begin_src emacs-lisp
+  ;; (comments borrowed from elpaca example configuration)
+  ;; Turns off elpaca-use-package-mode current declaration
+  ;; Note this will cause the declaration to be interpreted immediately (not deferred).
+  ;; Useful for configuring built-in emacs features.
+  (use-package emacs :elpaca nil
+    :config
+    ;(repeat-mode) ; allows calling multiple commands in a keymap without repeating whole prefix
+    (setq repeat-exit-timeout 5) ; in seconds
+    (setq ring-bell-function #'ignore) ; it doesn't ring me a bell
+    (put 'upcase-region 'disabled nil) ; enables C-x C-u for those who do not use capslock key
+    (defalias 'yes-or-no-p 'y-or-n-p)
+    (setq inhibit-startup-screen t) ; you are welcome!
+    (setq set-mark-command-repeat-pop  t) ; C-u C-SPC then you cycle through mark ring with C-SPC
+    (setq-default indent-tabs-mode nil) ; indentation with spaces, hopefull  )
+  )
+#+end_src
+
+** Backup Behaviour
+Changing default behavior of saving backups at the same directory
+of targeted file
+
+#+NAME: backups
+#+BEGIN_SRC emacs-lisp
+  (setq backup-directory-alist `(("." . "~/.config/emacs/backup"))
+        backup-by-copying t
+        delete-old-versions t
+        kept-new-versions 10
+        kept-old-versions 10
+        version-control t
+        auto-save-list-file-prefix nil
+        auto-save-default nil)
+#+END_SRC
+    
+** Mark and Kill Ring
+Using C-u c-SPC enables you to cycle through the kill ring using only C-SPC, see [[info:emacs#Mark Ring][emacs#Mark Ring]].
+[[https://www.masteringemacs.org/article/fixing-mark-commands-transient-mark-mode][Some]] prefer to change the behavior of the mark system in respect to the active transient-mark-mode
+
+#+NAME: mark-repeat
+#+begin_src emacs-lisp
+  (setq set-mark-command-repeat-pop  t)
+#+end_src
+
+* Custom Functions
+** Visiting and Reloading this Config
+Loading this configuration file. See 'user-init-file' variable, as
+an alternative to hardcoding the configuration file path.
+#+BEGIN_SRC emacs-lisp
+  (defun config-visit ()
+    (interactive)
+    (find-file "~/.config/emacs/config.org"))
+#+END_SRC
+
+Reloading this configuration file
+#+BEGIN_SRC emacs-lisp
+  (defun config-reload ()
+    (interactive)
+    (org-babel-load-file (expand-file-name "~/.config/emacs/config.org")))
+#+END_SRC
+
+* Keybindings
+** General Package for key definitions
+[[https://github.com/noctuid/general.el][General on GitHub]]
+
+#+NAME: general-install
+#+begin_src emacs-lisp
+  ;; (Help text from elpaca documentation)
+  ;; When installing a package which modifies a form used at the top-level
+  ;; (e.g. a package which adds a use-package key word),
+  ;; use `elpaca-wait' to block until that package has been installed/configured.
+  ;; For example:
+  (use-package general :demand t)
+  (elpaca-wait)
+#+end_src
+
+** Remarks About My Emacs Keybindings
+*** Modal Editing X Normal Editing
+- I tend to favor a semimodal interface over a full modal one, like evil-mode,
+  by use of repeating keymaps and 'transient mode' hydras
+
+  
+*** Common Key Semantics
+- Frequently used keybidings are defined using the middle row of keyboard (letters "cieak,ntsp"),
+  and tries to make use of the following general semantics:
+  - n -> next
+  - p -> previous
+  - s -> forward/right (default: f)
+  - t -> backward/left (default: b)
+  - e -> end
+  - a -> begining
+  - u -> up/undo
+  - d -> down/delete
+  - k -> kill
+  - q -> quit (see hydras)  
+    
+Those can ben combined with the following pressed command keys to provide, let's say,
+a "Toggled modal" chord, that can be quite easily pressed with thumbs (<CTRL> and <ALT>)
+and pinky <SHFT> over a  keyboard with thumb clusters (e.g., ergodox):
+- C <CTRL>
+- M <ALT>
+- C-M <CTRL+ALT>
+- C-S <CTRL+SHFT>
+- M-S <ALT+SHFT>
+- C-M-S <CTRL+ALT+SHFT>
+    
+  
+Repeat mode, in particular,  provides a transient keymap that helps in preventing
+repeating those keychord combinations (but cannot be used when self inserting characters
+are expected, like when using isearch).
+
+
+*** Prefix Keys
+- C-x keymap is for global bindings
+- C-c are reserved for users...but used by many packages
+- C-ç are used mainly for my hydras, with more or less modal editing/movement
+
+#+name: bassavox-leader-key
+#+begin_src emacs-lisp
+  (general-create-definer bassavox/leader-key
+    :keymaps 'override
+    :prefix "C-ç")
+#+end_src
+
+** Simple movement (char, line)
+#+NAME: keybidings-simple-movement
+#+begin_src emacs-lisp
+  (general-define-key
+   :keymaps 'global
+   "C-n" 'next-line			     ; default
+   "C-p" 'previous-line		     ; default
+   "C-s" 'forward-char
+   "C-t" 'backward-char
+   "C-a" 'back-to-indentation
+   "<home>" 'move-beginning-of-line      ; default
+   "C-e" 'move-end-of-line               ; default
+   )
+ 
+#+end_src
+*** repeat mode for simple movement
+#+begin_src emacs-lisp
+  ;; repeating mode makes <CTRL> "toggle" function useless
+  
+  ;; (defvar bassavox-simple-movement-repeat-map
+  ;;   (let ((map (make-sparse-keymap)))
+  ;;     (define-key map "n" 'next-line)
+  ;;     (define-key map "p" 'previous-line)
+  ;;     (define-key map "s" 'forward-char)
+  ;;     (define-key map "t" 'backward-char)
+  ;;     map)
+  ;;   "Repeating map for simple movement keys")
+  ;; (put 'next-line 'repeat-map 'bassavox-simple-movement-repeat-map)
+  ;; (put 'previous-line 'repeat-map 'bassavox-simple-movement-repeat-map)
+  ;; (put 'forward-char 'repeat-map 'bassavox-simple-movement-repeat-map)
+  ;; (put 'backward-char 'repeat-map 'bassavox-simple-movement-repeat-map)
+#+end_src
+
+"C-." 'repeat
+"C-S-a" 'backward-sentence
+"C-S-e" 'forward-sentence
+"C-M-a" 'beginning-of-defun
+"C-M-e" 'end-of-defun ; default
+;; killing
+"M-<backspace>" 'delete-indentation ; C-<backspace> kills back word
+"C-<backspace>" 'backward-kill-word ; default
+"C-S-<backspace>" 'kill-whole-line  ; default
+"M-DEL" 'kill-word
+"M-d" 'kill-word                    ; default
+"M-D" 'kill-sexp
+"C-d" 'delete-char                  ; default
+"C-S-d" 'kill-sexp
+"C-M-<backspace>" 'backward-kill-sexp ; default
+;; changing keybidings due to my new layout "DonTyQ"
+;; https://configure.zsa.io/ergodox-ez/layouts/RlEeW/latest/0
+;; "C-b" 'transpose-chars ; never really used transpose chars
+"C-f" 'isearch-forward
+"C-S-f" 'isearch-forward-regexp
+
+;; s-exp movements
+"C-S-s" 'forward-sexp
+"C-S-t" 'backward-sexp
+"C-M-n" 'forward-list                ; default
+"C-M-p" 'backward-list               ; default
+"C-S-n" 'down-list
+"C-S-p" 'backward-up-list
+
+** Searching
+#+NAME: keybindings-search
+#+begin_src emacs-lisp
+  (general-define-key
+   :keymaps 'global
+   "C-f"    'isearch-forward
+   "C-S-f"  'isearch-forward-regexp)
+  (general-define-key
+   :keymaps 'isearch-mode-map
+   "C-t"    'isearch-repeat-backward
+   "C-s"    'isearch-repeat-forward       ; default
+ )
+#+end_src
+
+** Elisp Evaluation
+#+begin_src emacs-lisp
+  (bassavox/leader-key
+   "e" '(:ignore t :wk "Evaluate")
+   "e b" '(eval-buffer :wk "Evaluate elisp in buffer")
+   "e d" '(eval-defun :wk "Evalute defun")
+   "e e" '(eval-expression :wk "Evaluate elisp exmpression")
+   "e s" '(eval-last-sexp :wk "Evaluate sexp before point")
+   "e r" '(eval-region :wk "Evaluate region")
+   )
+#+end_src
+
+** General Keys Keybidings
+#+begin_src emacs-lisp
+  (general-define-key
+   :keymaps 'global
+   "C-c e" 'config-visit
+   "C-c r" 'config-reload
+   "C-<prior>" 'previous-buffer
+   "C-<next>" 'next-buffer
+   )
+#+end_src
+
+** Hydras
+*** Hydra Install
+#+begin_src emacs-lisp
+  (use-package hydra)
+  (elpaca-wait)
+#+end_src
+
+*** Hydra-Org
+#+NAME:hydra-global-org
+#+begin_src emacs-lisp
+  (defhydra hydra-global-org (:color blue)
+    "Org"
+    ("n" org-next-visible-heading "Next H" :color red)
+    ("p" org-previous-visible-heading "Previous H" :color red)
+    ("t" org-backward-heading-same-level "Backward =L" :color red)
+    ("s" org-forward-heading-same-level "Forward =L" :color red)
+    ("i" org-cycle "Cycle" :color red)
+    ("I" org-shifttab "CYCLE" :color red)
+    ("u" org-up-element "Up el" :color red)
+    ("d" org-down-element "Down el" :color red)
+    ("T" org-metaup "Meta Up" :color red)
+    ("S" org-metadown "Meta Down" :color red)
+    ("c" org-capture "Capture") ; Don't forget to define the captures you want http://orgmode.org/manual/Capture.html
+    ("y" org-clock-in  "Clock-In") ; used with (org-clock-persistence-insinuate) (setq org-clock-persist t)
+    ("o" org-clock-out "Clock-Out") ; you might also want (setq org-log-note-clock-out t)
+    ("e" org-clock-goto "Clock Goto") ; global visit the clocked task
+    ("b" org-insert-structure-template "Insert Block")
+    ("q" nil "Quit"))
+  (bassavox/leader-key
+    "o" '(hydra-global-org/body :which-key "global-org")
+    "C-o" '(hydra-global-org/body :which-key "global-org")
+    )
+
+#+end_src
+
+*** Hydra-Buffer
+#name: hydra-global-buffer
+#+begin_src emacs-lisp
+    (defhydra hydra-global-buffer (:color red)
+      "Buffer"
+      ("n" next-buffer "Next" :color red)
+      ("p" previous-buffer "Previous" :color red)
+      ("b" switch-to-buffer "Switch to" :color red)
+      ("k" kill-this-buffer "Kill" :color red)
+      ("f" find-file "Find File" :color red)
+      ("i" ibuffer "Ibuffer")
+      ("r" revert-buffer "Revert")
+      ("c" rename-buffer "Change Name")
+      ("q" nil "Quit"))
+    (bassavox/leader-key
+      "b" '(hydra-global-buffer/body :which-key "global-buffer")
+      "C-b" '(hydra-global-buffer/body :which-key "global-buffer")
+  )
+#+end_src
+
+*** Hydra-Line
+#+begin_src emacs-lisp
+  (defhydra hydra-global-line (:color blue)
+    "Line"
+    ("n" display-line-numbers-mode "Toggle numbered" :color red)
+    ("t" visual-line-mode "Toggle truncated" :color red)
+    ("q" nil "Quit"))
+  (bassavox/leader-key
+    "l" '(hydra-global-line/body :which-key "global-line")
+    "C-l" '(hydra-global-line/body :which-key "global-line")
+  )
+#+end_src
+
+*** Hydra-Zoom
+#+begin_src emacs-lisp
+  (defhydra hydra-global-zoom (:color blue)
+    "Zoom"
+    ("i" text-scale-increase "In" :color red)
+    ("o" text-scale-decrease "Out" :color red)
+    ("r" (text-scale-set 0) "Reset" :exit t)
+    ("q" nil "Quit"))
+  (bassavox/leader-key
+    "C-z" '(hydra-global-zoom/body :which-key "global-zoom")
+    "z" '(hydra-global-zoom/body :which-key "global-zoom"))
+#+end_src
+
+*** Hydra-Sexp
+#+begin_src emacs-lisp
+  (defhydra hydra-global-sexp (:color blue)
+    "Sexp"
+    ("s" forward-sexp "sexp->" :color red)
+    ("t" backward-sexp "<-sexp" :color red)
+    ("n" forward-list "->" :color red)
+    ("p" backward-list "<-" :color red)
+    ("d" down-list "Down" :color red)
+    ("u" up-list "Up" :color red)
+    ("a" nil "Defun Beg" :color red)
+    ("e" nil "Defun End" :color red)
+    ("m" mark-sexp "Mark" :color red)
+    ("c" transpose-sexps "Change/Transpose" :color red)
+    ("k" kill-sexp "Kill" :color red)
+    ("r" raise-sexp "Raise" :color red)
+    ("<backspace>" backward-kill-sexp "Kill<" :color red)
+    ("/" undo "Undo" :color red) ; works once before quitting hydra
+    ("q" nil "Quit"))
+  (bassavox/leader-key
+    "s" '(hydra-global-sexp/body :which-key "global-sexp")
+    "C-s" '(hydra-global-sexp/body :which-key "global-sexp")
+    )
+#+end_src
+
+*** Hydra-Window
+To prevent typos, you have to explicitly quit this hydra
+#+begin_src emacs-lisp
+  (defhydra hydra-global-window (:color amaranth)
+    "Window"
+    ("v" split-window-right "v-split" :color red)
+    ("p" scroll-down-line "scroll" :color red)
+    ("n" scroll-up-line "scroll^" :color red)
+    ("t" scroll-right "<scroll" :color red)
+    ("s" scroll-left "scroll>" :color red)
+    ("^" beginning-of-buffer "beginning" :color red)
+    ("$" end-of-buffer "end" :color red)
+    ("h" split-window-below "h-split" :color red)
+    ("c" window-swap-states "change" :color red)
+    ("e" enlarge-window "enlarge" :color red)
+    ("a" shrink-window "shrink" :color red)
+    ("E" enlarge-window-horizontally "enlarge h" :color red)
+    ("A" shrink-window-horizontally "shrink h" :color red)
+    ("f" find-file "find file" :color red)
+    ("r" balance-windows "reset" :color red)
+    ("M" maximize-window "maximize" :color red)
+    ("m" minimize-window "minimize" :color red)
+    ("b" switch-to-buffer "switch to buffer" :color red) 
+    ("o" other-window "other" :color red)
+    ("k" delete-window "kill this" :color red)
+    ("d" delete-other-windows "delete others" :color red)
+    ("q" nil "Quit"))
+
+  (bassavox/leader-key
+    "w" '(hydra-global-window/body :which-key "global-window")
+    "C-w" '(hydra-global-window/body :which-key "global-window"))
+#+end_src
+
+** Not Hydras
+
+* Tree Sitter
+** About
+[[https://www.gnu.org/software/emacs/manual/html_node/elisp/Parsing-Program-Source.html][Parsing Program Source]]
+
+[[https://github.com/emacs-mirror/emacs/blob/a8732cb07aa3d707fd1a5271b1d6645ca3c84c3c/admin/notes/tree-sitter/starter-guide][github tree-sitter]]
+
+** Tree Sitter grammars
+#+begin_src emacs-lisp
+  (setq treesit-language-source-alist
+   '((bash "https://github.com/tree-sitter/tree-sitter-bash")
+     (rust "https://github.com/tree-sitter/tree-sitter-rust")
+     (cmake "https://github.com/uyha/tree-sitter-cmake")
+     (css "https://github.com/tree-sitter/tree-sitter-css")
+     (elisp "https://github.com/Wilfred/tree-sitter-elisp")
+     (go "https://github.com/tree-sitter/tree-sitter-go")
+     (html "https://github.com/tree-sitter/tree-sitter-html")
+     (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
+     (json "https://github.com/tree-sitter/tree-sitter-json")
+     (make "https://github.com/alemuller/tree-sitter-make")
+     (markdown "https://github.com/ikatyang/tree-sitter-markdown")
+     (python "https://github.com/tree-sitter/tree-sitter-python")
+     (toml "https://github.com/tree-sitter/tree-sitter-toml")
+     (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+     (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+     (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
+#+end_src
+
+** Remaping Some Major Modes to Use Tree Sitter's Mode 
+
+#+begin_src emacs-lisp
+  (setq major-mode-remap-alist
+        '((python-mode . python-ts-mode)))
+#+end_src
+
+* Appearance
+** Faces
+#+begin_src emacs-lisp
+  (set-face-attribute 'default nil
+                      :font "JetBrains Mono"
+                      :height 110
+                      :weight 'medium)
+  (set-face-attribute 'variable-pitch nil
+                      :font "Ubuntu"
+                      :height 120
+                      :weight 'medium)
+  (set-face-attribute 'fixed-pitch nil
+                      :font "JetBrains Mono"
+                      :height 110
+                      :weight 'medium)
+  (setq-default line-spacing 0.09)
+  (set-face-attribute 'font-lock-comment-face nil
+                      :slant 'italic)
+#+end_src
+
+** Slim Emacs Layout
+Removing upper bar and scroll and giving some customized breathing room on all frames:
+
+#+NAME: bar-disable
+#+BEGIN_SRC emacs-lisp
+  (menu-bar-mode -1)
+  (scroll-bar-mode -1)
+  (tool-bar-mode -1)
+  (set-fringe-mode 5) ; fringes display line truncation, continuation line,
+#+END_SRC
+    
+** Theme and Modeline
+Doom-Moonlight, Doom-Gruvbox, Doom-vibrant and Doom-Tomorrownight,
+doom-horizon, doom-palenight are amongst my favourites themes!
+#+NAME: theme
+#+BEGIN_SRC emacs-lisp
+  ;; (use-package doom-themes
+  ;;   :config (load-theme 'doom-palenight t)
+  ;;   (doom-themes-org-config)
+  ;;   )
+#+END_SRC 
+
+
+Doom has a nice, minimalistic, modeline. You may have to run "all-the-icons-install-fonts".
+#+NAME: modeline
+#+BEGIN_SRC emacs-lisp
+  ;; ;; all-the-icons is required for doom-modeline
+  ;; (use-package all-the-icons
+  ;;   :ensure t
+  ;;   :if (display-graphic-p))
+
+
+  ;; (use-package doom-modeline
+  ;;   :ensure t
+  ;;   :if (display-graphic-p)
+  ;;   :init (doom-modeline-mode 1)
+  ;;   :config
+  ;;   (set-face-attribute 'mode-line nil :family "Noto Sans" :height 98)
+  ;;   (set-face-attribute 'mode-line-inactive nil :family "Noto Sans" :height 98)
+  ;;   :custom ((doom-modeline-height 25)))
+  ;; (column-number-mode)
+#+END_SRC
+
+** Cursor and Movement
+By default, emacs' jumps the cursor, along with the content, 
+to the middle of the screen when scrolling pass the end of the file.
+To prevent those jumps use:
+
+#+BEGIN_SRC emacs-lisp
+  (setq scroll-conservatively 101 )
+#+END_SRC
+
+Highlighting current line and making it more pronounceable when
+changing windows or buffers.
+
+#+BEGIN_SRC emacs-lisp
+  ;; (when window-system (global-hl-line-mode t))
+  (use-package beacon
+    :ensure t
+    :init
+    (beacon-mode 1)
+    (setq beacon-blink-delay 0.8)
+    (setq beacon-blink-duration 0.5)
+    )
+#+END_SRC
+    
+** Rainbow Everywhere
+#+NAME: rainbow-delimiters
+#+BEGIN_SRC emacs-lisp
+  (use-package rainbow-delimiters
+    :hook (prog-mode . rainbow-delimiters-mode))
+#+END_SRC
+
+Better to activate rainbow-mode manually, per use case, because
+it has the annoying effect of corouring words that refers to colors....
+
+
+#+begin_src emacs-lisp
+  (use-package rainbow-mode) 
+#+end_src
+
+** Custom Theme
+#+begin_src emacs-lisp
+  (add-to-list 'custom-theme-load-path "~/.config/emacs/themes/")
+  (load-theme 'orange_tial t)
+#+end_src
+
+* Minibuffer
+** Which Key
+Shows keybindings as you type
+
+#+NAME: which-key
+#+BEGIN_SRC emacs-lisp
+  (use-package which-key
+    :init (which-key-mode)
+    :diminish which-key-mode
+    :config
+    (setq which-key-add-column-padding 0
+          which-key-allow-imprecise-window-fit nil
+          which-key-idle-delay 0.8
+          which-key-popup-type 'side-window
+          which-key-separator " "
+          which-key-side-window-location 'bottom
+          which-key-side-window-max-height  20
+          which-key-side-window-slot 1
+          which-key-sort-order 'which-key-description-order
+          which-key-sort-uppercase-first nil
+          ))
+
+#+END_SRC
+
+** Orderless
+#+begin_src emacs-lisp
+(use-package orderless
+  :init
+  ;; Configure a custom style dispatcher (see the Consult wiki)
+  ;; (setq orderless-style-dispatchers '(+orderless-consult-dispatch orderless-affix-dispatch)
+  ;;       orderless-component-separator #'orderless-escapable-split-on-space)
+  (setq completion-styles '(orderless basic)
+        completion-category-defaults nil
+        completion-category-overrides '((file (styles partial-completion)))))
+#+end_src
+
+** Vertico
+#+begin_src emacs-lisp
+  (use-package vertico
+    :init
+    (vertico-mode)
+
+    ;; Different scroll margin
+    ;; (setq vertico-scroll-margin 0)
+
+    ;; Show more candidates
+    ;; (setq vertico-count 20)
+
+    ;; Grow and shrink the Vertico minibuffer
+    ;; (setq vertico-resize t)
+
+    ;; Optionally enable cycling for `vertico-next' and `vertico-previous'.
+    ;; (setq vertico-cycle t)
+    )
+
+#+end_src
+
+** Marginalia
+Copied from package github's page:
+#+begin_src emacs-lisp
+  ;; Enable rich annotations using the Marginalia package
+  (use-package marginalia
+    ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
+    ;; available in the *Completions* buffer, add it to the
+    ;; `completion-list-mode-map'.
+    :bind (:map minibuffer-local-map
+           ("M-A" . marginalia-cycle))
+
+    ;; The :init section is always executed.
+    :init
+  
+    ;; Marginalia must be activated in the :init section of use-package such that
+    ;; the mode gets enabled right away. Note that this forces loading the
+    ;; package.
+    (marginalia-mode))
+#+end_src
+
+* Org Mode
+** Table of Contents
+#+begin_src emacs-lisp
+  (use-package toc-org
+    :commands toc-org-enable
+    :init (add-hook 'org-mode-hook 'toc-org-enable))
+#+end_src
+
+** Org Bullets
+#+begin_src emacs-lisp
+  ;; copied from https://systemcrafters.net/emacs-from-scratch/org-mode-basics/
+  (use-package org-bullets
+    :after org
+    :hook (org-mode . org-bullets-mode)
+    :custom
+   (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
+
+  (dolist (face '((org-level-1 . 1.2)
+                  (org-level-2 . 1.1)
+                  (org-level-3 . 1.05)
+                  (org-level-4 . 1.0)
+                  (org-level-5 . 1.1)
+                  (org-level-6 . 1.1)
+                  (org-level-7 . 1.1)
+                  (org-level-8 . 1.1)))
+      (set-face-attribute (car face) nil :font "JetBrains Mono" :weight 'regular :height (cdr face)))
+#+end_src
+
+** Org faces
+
+#+begin_src emacs-lisp
+  (setq org-src-block-faces
+       '(("emacs-lisp" (:background "#2e3f47"))
+         ("python" (:background "#2e3f47"))))
+#+end_src
+
+* Development
+** Yasnippet
+Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnippet_via_usepackage/][reddit]] user
+#+NAME: yasnippet
+#+BEGIN_SRC emacs-lisp
+  (use-package yasnippet
+    :ensure t
+    :config
+    (yas-reload-all)
+    (add-hook 'prog-mode-hook 'yas-minor-mode)
+    (add-hook 'text-mode-hook 'yas-minor-mode)
+    )
+
+  (use-package yasnippet-snippets
+    :after yasnippet
+    :ensure t)
+#+END_SRC
+
+** LSP - Language Server Protocol
+Protocol by Microsoft. There are currently (2023)
+3 emacs cliets for a given LSP server (lsp-mode, eglot and lsp-bridge).
+#+NAME: lsp-bridge
+#+begin_src emacs-lisp
+  
+#+end_src
+** Language Specific Configuration
+*** Markdown Mode
+Pasted from [[https://github.com/jrblevin/markdown-mode][github]]
+#+begin_src emacs-lisp
+  (use-package markdown-mode
+    :ensure t 
+    :mode ("README\\.md\\'" . gfm-mode)
+    :init (setq markdown-command "multimarkdown")
+    :bind (:map markdown-mode-map
+                ("C-c C-e" . markdown-do)))
+#+end_src
+
+*** Python
+
+* Tests
+#+begin_src python
+  def teste():
+      print('esse é um teste')    
+  class Coisa
+#+end_src
+
+#+begin_src emacs-lisp
+  
+#+end_src
+* Fixes
+** Electric Indent Mode and Org Mode
+Sometimes when editing org babel source blocks you get weird
+identation behaviour. You can add hook to org and set
+variable 'electric-indent-mode' to nil
+
+** Sudo edit
+There is a sudo-edit package to find-file with sudo 
