@@ -1,9 +1,9 @@
 #+TITLE: Bassavox Emacps Configuration
 #+AUTHOR: bassavox
-#+DESCRIPTION:
+#+DESCRIPTION: Literate Configuration of Emacs
 #+OPTION: toc:2
 #+PROPERTY: header-args :results silent
-#+STARTUP: show2levels
+#+STARTUP: overview
 
 * Package Manager
 ** Elpaca
@@ -92,6 +92,9 @@
     (setq inhibit-startup-screen t) ; you are welcome!
     (setq set-mark-command-repeat-pop  t) ; C-u C-SPC then you cycle through mark ring with C-SPC
     (setq-default indent-tabs-mode nil) ; indentation with spaces, hopefull  )
+    (electric-pair-mode 1) ; matching parentheses and other delimiters
+    (setq shift-select-mode nil) ; I don't care about shift selecting
+    (global-subword-mode 1) ; Capitalized word delimits subwords e.g. CamelCase
   )
 #+end_src
 
@@ -157,7 +160,6 @@ Reloading this configuration file
 - I tend to favor a semimodal interface over a full modal one, like evil-mode,
   by use of repeating keymaps and 'transient mode' hydras
 
-  
 *** Common Key Semantics
 - Frequently used keybidings are defined using the middle row of keyboard (letters "cieak,ntsp"),
   and tries to make use of the following general semantics:
@@ -187,17 +189,17 @@ Repeat mode, in particular,  provides a transient keymap that helps in preventin
 repeating those keychord combinations (but cannot be used when self inserting characters
 are expected, like when using isearch).
 
-
 *** Prefix Keys
 - C-x keymap is for global bindings
-- C-c are reserved for users...but used by many packages
+- C-c was supposed to be reserved for users...but many packages use it
 - C-ç are used mainly for my hydras, with more or less modal editing/movement
 
 #+name: bassavox-leader-key
 #+begin_src emacs-lisp
   (general-create-definer bassavox/leader-key
     :keymaps 'override
-    :prefix "C-ç")
+    :prefix "C-ç" ;; this character even looks like a Hydra!
+    )
 #+end_src
 
 ** Simple movement (char, line)
@@ -205,8 +207,8 @@ are expected, like when using isearch).
 #+begin_src emacs-lisp
   (general-define-key
    :keymaps 'global
-   "C-n" 'next-line			     ; default
-   "C-p" 'previous-line		     ; default
+   "C-n" 'next-line			 ; default
+   "C-p" 'previous-line		         ; default
    "C-s" 'forward-char
    "C-t" 'backward-char
    "C-a" 'back-to-indentation
@@ -296,6 +298,8 @@ are expected, like when using isearch).
    "C-c r" 'config-reload
    "C-<prior>" 'previous-buffer
    "C-<next>" 'next-buffer
+   "C-x C-b" 'switch-to-buffer ;; instead of  list-buffers
+   "C-x C-n"  nil ;; disabling set-goal-column
    )
 #+end_src
 
@@ -315,12 +319,14 @@ are expected, like when using isearch).
     ("p" org-previous-visible-heading "Previous H" :color red)
     ("t" org-backward-heading-same-level "Backward =L" :color red)
     ("s" org-forward-heading-same-level "Forward =L" :color red)
-    ("i" org-cycle "Cycle" :color red)
+    ("i" org-cycle "Cycle" :color red) ; this reflects my C-i, or <tab> in "normal mode"
     ("I" org-shifttab "CYCLE" :color red)
     ("u" org-up-element "Up el" :color red)
     ("d" org-down-element "Down el" :color red)
     ("T" org-metaup "Meta Up" :color red)
     ("S" org-metadown "Meta Down" :color red)
+    ("D" org-insert-drawer "Drawer")
+    ("a" org-agenda "Agenda")
     ("c" org-capture "Capture") ; Don't forget to define the captures you want http://orgmode.org/manual/Capture.html
     ("y" org-clock-in  "Clock-In") ; used with (org-clock-persistence-insinuate) (setq org-clock-persist t)
     ("o" org-clock-out "Clock-Out") ; you might also want (setq org-log-note-clock-out t)
@@ -344,6 +350,8 @@ are expected, like when using isearch).
       ("b" switch-to-buffer "Switch to" :color red)
       ("k" kill-this-buffer "Kill" :color red)
       ("f" find-file "Find File" :color red)
+      ("s" save-buffer "Save" :color blue)
+      ("S" save-some-buffers "Save Some" :color blue)
       ("i" ibuffer "Ibuffer")
       ("r" revert-buffer "Revert")
       ("c" rename-buffer "Change Name")
@@ -430,7 +438,7 @@ To prevent typos, you have to explicitly quit this hydra
     ("b" switch-to-buffer "switch to buffer" :color red) 
     ("o" other-window "other" :color red)
     ("k" delete-window "kill this" :color red)
-    ("d" delete-other-windows "delete others" :color red)
+    ("d" delete-other-windows "delete others" :color teal)
     ("q" nil "Quit"))
 
   (bassavox/leader-key
@@ -479,17 +487,17 @@ To prevent typos, you have to explicitly quit this hydra
 #+begin_src emacs-lisp
   (set-face-attribute 'default nil
                       :font "JetBrains Mono"
-                      :height 110
+                      :height 105
                       :weight 'medium)
   (set-face-attribute 'variable-pitch nil
                       :font "Ubuntu"
-                      :height 120
+                      :height 105
                       :weight 'medium)
   (set-face-attribute 'fixed-pitch nil
                       :font "JetBrains Mono"
-                      :height 110
+                      :height 105
                       :weight 'medium)
-  (setq-default line-spacing 0.09)
+  (setq-default line-spacing 0.08)
   (set-face-attribute 'font-lock-comment-face nil
                       :slant 'italic)
 #+end_src
@@ -606,6 +614,7 @@ Shows keybindings as you type
 #+END_SRC
 
 ** Orderless
+#+name: orderless
 #+begin_src emacs-lisp
 (use-package orderless
   :init
@@ -618,6 +627,7 @@ Shows keybindings as you type
 #+end_src
 
 ** Vertico
+#+name: vertico
 #+begin_src emacs-lisp
   (use-package vertico
     :init
@@ -640,6 +650,7 @@ Shows keybindings as you type
 
 ** Marginalia
 Copied from package github's page:
+#+name: marginalia
 #+begin_src emacs-lisp
   ;; Enable rich annotations using the Marginalia package
   (use-package marginalia
@@ -667,33 +678,53 @@ Copied from package github's page:
 #+end_src
 
 ** Org Bullets
+#+name: org-bullets
 #+begin_src emacs-lisp
   ;; copied from https://systemcrafters.net/emacs-from-scratch/org-mode-basics/
   (use-package org-bullets
     :after org
     :hook (org-mode . org-bullets-mode)
     :custom
-   (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
+   ;; (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
+   ;; (org-bullets-bullet-list '("🦊" "🌲" "🫐" "🫙" "👽" "♭" "♯")))
+   ;; (org-bullets-bullet-list '("Ⅰ" "Ⅱ" "Ⅲ" "Ⅳ" "Ⅴ" "Ⅵ" "Ⅶ" "Ⅷ)))
+   ;; (org-bullets-bullet-list '("🌕" "🌔" "🌓" "🌒" "🌑" "🌘" "🌗" "🌖")))
+   ;; (org-bullets-bullet-list '("▲" "◥" "▶" "▼" "◣" "◀" "◤")))
+   (org-bullets-bullet-list '("▲" "▶" "▼")))
 
-  (dolist (face '((org-level-1 . 1.2)
-                  (org-level-2 . 1.1)
-                  (org-level-3 . 1.05)
-                  (org-level-4 . 1.0)
-                  (org-level-5 . 1.1)
-                  (org-level-6 . 1.1)
-                  (org-level-7 . 1.1)
-                  (org-level-8 . 1.1)))
+  (dolist (face '((org-level-1 . 1.10)
+                  (org-level-2 . 1.09)
+                  (org-level-3 . 1.08)
+                  (org-level-4 . 1.07)
+                  (org-level-5 . 1.06)
+                  (org-level-6 . 1.05)
+                  (org-level-7 . 1.04)
+                  (org-level-8 . 1.03)))
       (set-face-attribute (car face) nil :font "JetBrains Mono" :weight 'regular :height (cdr face)))
 #+end_src
 
 ** Org faces
-
+#+name: org-faces
 #+begin_src emacs-lisp
   (setq org-src-block-faces
        '(("emacs-lisp" (:background "#2e3f47"))
          ("python" (:background "#2e3f47"))))
 #+end_src
-
+** Org Babel
+#+name: org-babel
+#+begin_src emacs-lisp
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '(
+     (python . t)
+     (shell . t)
+     (latex . t)
+     (scheme . t)
+     (R . t)
+     (lilypond . t)
+     (sql . t)
+     ))
+#+end_src
 * Development
 ** Yasnippet
 Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnippet_via_usepackage/][reddit]] user
@@ -711,7 +742,11 @@ Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnipp
     :after yasnippet
     :ensure t)
 #+END_SRC
-
+** Magit
+#+name magit
+#+begin_src emacs-lisp
+  (use-package magit)
+#+end_src
 ** LSP - Language Server Protocol
 Protocol by Microsoft. There are currently (2023)
 3 emacs cliets for a given LSP server (lsp-mode, eglot and lsp-bridge).
@@ -722,6 +757,7 @@ Protocol by Microsoft. There are currently (2023)
 ** Language Specific Configuration
 *** Markdown Mode
 Pasted from [[https://github.com/jrblevin/markdown-mode][github]]
+#+name: markdown-mode
 #+begin_src emacs-lisp
   (use-package markdown-mode
     :ensure t 
@@ -751,3 +787,14 @@ variable 'electric-indent-mode' to nil
 
 ** Sudo edit
 There is a sudo-edit package to find-file with sudo 
+
+* um
+** dois
+*** três
+**** quatro
+***** cinco
+****** seis
+******* sete
+******** oito
+********* nove
+********** dez
