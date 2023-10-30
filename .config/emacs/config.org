@@ -10,7 +10,7 @@
 [[https://github.com/progfolio/elpaca][Copy and pasted from github]]
 
 #+begin_src emacs-lisp
-  (defvar elpaca-installer-version 0.4)
+  (defvar elpaca-installer-version 0.5)
   (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
   (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
   (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
@@ -398,13 +398,14 @@ are expected, like when using isearch).
     ("p" backward-list "<-" :color red)
     ("d" down-list "Down" :color red)
     ("u" up-list "Up" :color red)
-    ("a" nil "Defun Beg" :color red)
-    ("e" nil "Defun End" :color red)
+    ("a" beginning-of-defun "Defun Beg" :color red)
+    ("e" end-of-defun  "Defun End" :color red)
     ("m" mark-sexp "Mark" :color red)
     ("c" transpose-sexps "Change/Transpose" :color red)
-    ("k" kill-sexp "Kill" :color red)
+    ("k" kill-sexp "Kill>" :color red)
     ("r" raise-sexp "Raise" :color red)
     ("<backspace>" backward-kill-sexp "Kill<" :color red)
+    ("<delete>" kill-sexp "Kill>" :color red)
     ("/" undo "Undo" :color red) ; works once before quitting hydra
     ("q" nil "Quit"))
   (bassavox/leader-key
@@ -511,6 +512,8 @@ Removing upper bar and scroll and giving some customized breathing room on all f
   (scroll-bar-mode -1)
   (tool-bar-mode -1)
   (set-fringe-mode 5) ; fringes display line truncation, continuation line,
+  (column-number-mode 1)
+  (line-number-mode 1)
 #+END_SRC
     
 ** Theme and Modeline
@@ -587,6 +590,108 @@ it has the annoying effect of corouring words that refers to colors....
 #+begin_src emacs-lisp
   (add-to-list 'custom-theme-load-path "~/.config/emacs/themes/")
   (load-theme 'orange_tial t)
+#+end_src
+
+* Development
+** Yasnippet
+Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnippet_via_usepackage/][reddit]] user
+#+NAME: yasnippet
+#+BEGIN_SRC emacs-lisp
+  (use-package yasnippet
+    :ensure t
+    :config
+    (yas-reload-all)
+    (add-hook 'prog-mode-hook 'yas-minor-mode)
+    (add-hook 'text-mode-hook 'yas-minor-mode)
+    )
+
+  (use-package yasnippet-snippets
+    :after yasnippet
+    :ensure t)
+#+END_SRC
+** Magit
+#+name magit
+#+begin_src emacs-lisp
+  (use-package magit)
+#+end_src
+
+** LSP - Language Server Protocol
+*** LSP Mode
+#+begin_src emacs-lisp
+  (use-package lsp-mode
+    :init
+    (setq lsp-keymap-prefix "C-!")
+    :hook (
+           (rust-mode . lsp)
+           (lsp-mode . lsp-enable-which-key-integration))
+    :commands lsp)
+  (use-package lsp-ui :commands lsp-ui-mode)
+  (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
+#+end_src
+** Language Specific Configuration
+*** Markdown Mode
+Pasted from [[https://github.com/jrblevin/markdown-mode][github]]
+#+name: markdown-mode
+#+begin_src emacs-lisp
+  (use-package markdown-mode
+    :ensure t 
+    :mode ("README\\.md\\'" . gfm-mode)
+    :init (setq markdown-command "multimarkdown")
+    :bind (:map markdown-mode-map
+                ("C-c C-e" . markdown-do)))
+#+end_src
+
+*** Python
+*** Lisp
+#+begin_src emacs-lisp
+  (use-package racket-mode
+    :elpaca t)
+#+end_src
+*** Rust
+** Rust
+*** rust-mode toml-mode cargo and flycheck
+   See https://www.reddit.com/r/rust/comments/a3da5g/my_entire_emacs_config_for_rust_in_fewer_than_20/
+
+
+   Another good config: [[https://robert.kra.hn/posts/rust-emacs-setup/][Robert Krahn's]]
+   
+#+NAME: rust-mode
+#+BEGIN_SRC emacs-lisp
+     (use-package toml-mode)
+     
+     (use-package rust-mode
+       :hook (rust-mode . lsp))
+
+     ;; Add keybindings for interacting with Cargo
+     (use-package cargo
+       :hook (rust-mode . cargo-minor-mode))
+
+     (use-package flycheck-rust
+       :config (add-hook 'flycheck-mode-hook #'flycheck-rust-setup))
+#+END_SRC
+*** rustic
+#+NAME: rustic
+#+begin_src emacs-lisp
+  (use-package rustic
+    :ensure
+    :config
+    ;; uncomment for less flashiness
+    ;; (setq lsp-eldoc-hook nil)
+    ;; (setq lsp-enable-symbol-highlighting nil)
+    ;; (setq lsp-signature-auto-activate nil)
+
+    ;; comment to disable rustfmt on save
+    (setq rustic-format-on-save t)
+    (add-hook 'rustic-mode-hook 'bassavox/rustic-mode-hook))
+
+
+  (defun bassavox/rustic-mode-hook ()
+    ;; so that run C-c C-c C-r works without having to confirm, but don't try to
+    ;; save rust buffers that are not file visiting. Once
+    ;; https://github.com/brotzeit/rustic/issues/253 has been resolved this should
+    ;; no longer be necessary.
+    (when buffer-file-name
+      (setq-local buffer-save-without-query t)))
 #+end_src
 
 * Minibuffer
@@ -669,6 +774,34 @@ Copied from package github's page:
     (marginalia-mode))
 #+end_src
 
+** Embark
+#+begin_src emacs-lisp
+  (use-package embark
+  :ensure t
+
+  :bind
+  (("C-." . embark-act)         ;; pick some comfortable binding
+   ;; ("C-;" . embark-dwim)        ;; good alternative: M-.
+   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+
+  :init
+
+  ;; Optionally replace the key help with a completing-read interface
+  (setq prefix-help-command #'embark-prefix-help-command)
+
+  ;; Show the Embark target at point via Eldoc.  You may adjust the Eldoc
+  ;; strategy, if you want to see the documentation from multiple providers.
+  (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
+  ;; (setq eldoc-documentation-strategy #'eldoc-documentation-compose-eagerly)
+
+  :config
+
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
+#+end_src
 * Org Mode
 ** Table of Contents
 #+begin_src emacs-lisp
@@ -713,62 +846,49 @@ Copied from package github's page:
 ** Org Babel
 #+name: org-babel
 #+begin_src emacs-lisp
-  (org-babel-do-load-languages
-   'org-babel-load-languages
-   '(
-     (python . t)
-     (shell . t)
-     (latex . t)
-     (scheme . t)
-     (R . t)
-     (lilypond . t)
-     (sql . t)
-     ))
-#+end_src
-* Development
-** Yasnippet
-Copy and paste from [[https://www.reddit.com/r/emacs/comments/9bvawd/use_yasnippet_via_usepackage/][reddit]] user
-#+NAME: yasnippet
-#+BEGIN_SRC emacs-lisp
-  (use-package yasnippet
-    :ensure t
-    :config
-    (yas-reload-all)
-    (add-hook 'prog-mode-hook 'yas-minor-mode)
-    (add-hook 'text-mode-hook 'yas-minor-mode)
-    )
+      (org-babel-do-load-languages
+       'org-babel-load-languages
+       '(
+         (python . t)
+         (shell . t)
+         (latex . t)
+         (scheme . t)
+         (R . t)
+         (lilypond . t)
+         (sql . t)
+         ))
+  (use-package ob-racket
+    :elpaca (:type git :host github :repo "hasu/emacs-ob-racket"))
 
-  (use-package yasnippet-snippets
-    :after yasnippet
-    :ensure t)
-#+END_SRC
-** Magit
-#+name magit
-#+begin_src emacs-lisp
-  (use-package magit)
 #+end_src
-** LSP - Language Server Protocol
-Protocol by Microsoft. There are currently (2023)
-3 emacs cliets for a given LSP server (lsp-mode, eglot and lsp-bridge).
-#+NAME: lsp-bridge
+** Bibtex
 #+begin_src emacs-lisp
-  
-#+end_src
-** Language Specific Configuration
-*** Markdown Mode
-Pasted from [[https://github.com/jrblevin/markdown-mode][github]]
-#+name: markdown-mode
-#+begin_src emacs-lisp
-  (use-package markdown-mode
-    :ensure t 
-    :mode ("README\\.md\\'" . gfm-mode)
-    :init (setq markdown-command "multimarkdown")
-    :bind (:map markdown-mode-map
-                ("C-c C-e" . markdown-do)))
+  (setq bibtex-align-at-equal-sign t)
+  (setq bibtex-maintain-sorted-entries t)
+
+  (setq bib-files-directory '(directory-files
+                              (concat (getenv "HOME") "/git/org/bibliography/") t
+                              "^[A-Z|a-z].+.bib$"))
+  (setq pdf-files-directory '(concat (getenv "HOME") "/Dropbox/pdf/"))
 #+end_src
 
-*** Python
-
+* Academic
+** Citar
+#+begin_src emacs-lisp
+  (use-package citar
+  :no-require
+  :custom
+  (org-cite-insert-processor 'citar)
+  (org-cite-follow-processor 'citar)
+  (org-cite-activate-processor 'citar))
+#+end_src
+** Citar-Embark
+#+begin_src emacs-lisp
+  (use-package citar-embark
+  :after citar embark
+  :no-require
+  :config (citar-embark-mode))
+#+end_src
 * Tests
 #+begin_src python
   def teste():
